@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.seldiecam1.app.selfiecam1"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

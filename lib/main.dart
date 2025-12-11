@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
-
 import 'package:get/get.dart';
-
+import 'package:selfiecam1/infrastructure/theme/theme.dart';
 import 'infrastructure/navigation/navigation.dart';
 import 'infrastructure/navigation/routes.dart';
 
 void main() async {
-  var initialRoute = await Routes.initialRoute;
-  runApp(Main(initialRoute));
+  runApp(const MyApp());
 }
 
-class Main extends StatelessWidget {
-  final String initialRoute;
-  Main(this.initialRoute);
-
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      initialRoute: initialRoute,
+      debugShowCheckedModeBanner: false,
+      theme: appTheme,
+      initialRoute: Routes.SIGNIN,
       getPages: Nav.routes,
     );
   }
