@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/get_core.dart';
 
 // ------------------------------------------------------------------
-// Reusable Widget: Custom Icon Button (Experience Selection ke liye)
+// Reusable Widget: Custom Icon Button IconData (Experience Selection ke liye)
 // ------------------------------------------------------------------
 
 class CustomIconButton extends StatelessWidget {
@@ -102,6 +104,10 @@ class CustomIconButton extends StatelessWidget {
   }
 }
 
+// ------------------------------------------------------------------
+// Reusable Widget: Custom Icon Button Assets Path (Experience Selection ke liye)
+// ------------------------------------------------------------------
+
 class CustomIconButton1 extends StatelessWidget {
   final String icon;
   final String? label;
@@ -201,6 +207,72 @@ class CustomIconButton1 extends StatelessWidget {
   }
 }
 
+// ------------------------------------------------------------------
+// Reusable Widget: Custom Icon Button Assets Path (Experience Selection ke liye)
+// ------------------------------------------------------------------
+
+class ApprovalButton extends StatelessWidget {
+  final String text;
+  final Color color;
+  final String iconAssetPath;
+  final VoidCallback onPressed;
+
+  const ApprovalButton({
+    super.key,
+    required this.text,
+    required this.color,
+    required this.iconAssetPath,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: SizedBox(
+        height: 110,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                iconAssetPath,
+                height: 60,
+                width: 60,
+                color: Colors.white,
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: SizedBox(
+                  height: 60,
+                  child: VerticalDivider(color: Colors.white, thickness: 1),
+                ),
+              ),
+
+              Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter',
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 // ------------------------------------------------------------------
 // Reusable Widget: Utility Button (Refresh, Test Bandwidth, etc. ke liye)
 // ------------------------------------------------------------------

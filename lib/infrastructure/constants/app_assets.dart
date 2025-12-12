@@ -11,6 +11,11 @@ class AppAssets {
   static String gif = '$iconPath/gif.png';
   static String shoutout = '$iconPath/shoutout.png';
   static String slowmo = '$iconPath/slowmo.png';
+  static String thumbup = '$iconPath/thumb_up.png';
+  static String thumbdown = '$iconPath/thumb_down.png';
+  static String retake = '$iconPath/retake.png';
+  static String sendme = '$iconPath/sendme.png';
+  static String takePhoto = '$iconPath/take_photo.png';
 
   //~~~~~~~~~~~~~~~~Images~~~~~~~~~~~~~~~~~~~~~~~~~//
 
@@ -21,6 +26,7 @@ class AppAssets {
   static String background3 = '$imagesPath/bg-3.png';
   static String background4 = '$imagesPath/bg-4.png';
   static String qr = '$imagesPath/qr.png';
+  static String qr2 = '$imagesPath/qr_2.png';
 
   //~~~~~~~~~~~~~~~~Animations~~~~~~~~~~~~~~~~~~~~~~~~~//
 

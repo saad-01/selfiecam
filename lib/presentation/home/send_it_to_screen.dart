@@ -4,41 +4,16 @@ import 'package:get/get_navigation/get_navigation.dart';
 import 'package:get/instance_manager.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component1.dart';
-
 import '../../infrastructure/constants/app_assets.dart';
-import '../component/toast_component.dart';
 
-class PreviewApproveScreen extends StatefulWidget {
-  const PreviewApproveScreen({super.key});
+class SenItToMeScreen extends StatefulWidget {
+  const SenItToMeScreen({super.key});
 
   @override
-  State<PreviewApproveScreen> createState() => _PreviewApproveScreenState();
+  State<SenItToMeScreen> createState() => _SenItToMeScreenState();
 }
 
-class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
-
-
-  void _handleButtonClick(BuildContext context) {
-    showCustomToastWithCheckbox(context);
-  }
-
-  void showCustomToastWithCheckbox(BuildContext context) {
-    void navigate() {
-      Get.toNamed(Routes.SENDITTOME);
-    }
-
-    OverlayEntry? overlayEntry;
-
-    overlayEntry = OverlayEntry(
-      builder: (context) => CustomToastWithCheckbox(
-        overlayEntry: overlayEntry!,
-        onCheckedNavigate: navigate,
-      ),
-    );
-
-    Overlay.of(context).insert(overlayEntry);
-  }
-
+class _SenItToMeScreenState extends State<SenItToMeScreen> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -53,7 +28,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
           Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text('YOU LIKE IT?`', style: textTheme.displayLarge),
+              Text('SEND IT TO YOURSELF', style: textTheme.displayLarge),
               Gap(20),
               SizedBox(
                 width: Get.width * 0.9,
@@ -61,34 +36,27 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
                   children: [
                     Expanded(
                       child: ApprovalButton(
-                        text: 'NO WAY',
-                        color: Color(0xffFF0000),
-                        iconAssetPath: AppAssets.thumbdown,
+                        text: 'RETAKE',
+                        color: Color(0xffFFAA00),
+                        iconAssetPath: AppAssets.retake,
                         onPressed: () {},
                       ),
                     ),
                     Gap(20),
                     Expanded(
                       child: ApprovalButton(
-                        text: 'NO YEAH',
+                        text: 'SEND ME',
                         color: Color(0xff00C846),
-                        iconAssetPath: AppAssets.thumbup,
+                        iconAssetPath: AppAssets.sendme,
                         onPressed: () {
-                          _handleButtonClick(context);
+                          Get.toNamed(Routes.SENDITTOME2);
                         },
                       ),
                     ),
                   ],
                 ),
               ),
-              Gap(20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                child: Text(
-                  'By pressing “OH YEAH!” you agree to our terms & conditions and privacy policy agreement',
-                  style: textTheme.labelMedium!.copyWith(fontSize: 19),
-                ),
-              ),
+
               SizedBox(height: Get.width * 0.3),
             ],
           ),

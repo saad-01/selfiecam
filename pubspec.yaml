@@ -89,6 +89,10 @@ flutter:
     - family: Akshar
       fonts:
         - asset: assets/fonts/Akshar-Regular.ttf
+
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
