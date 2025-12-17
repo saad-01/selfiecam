@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:get/route_manager.dart';
+import 'package:sizer/sizer.dart';
 import 'controller/admin_menu_controller.dart';
 import '../../../infrastructure/constants/app_assets.dart';
 import '../../../infrastructure/navigation/routes.dart';
 import '../../component/button_component.dart';
 import '../../component/textfield_component.dart';
 
-class AdminMenuScrren extends GetView<AdminMenuController> {
-  const AdminMenuScrren({super.key});
+class AdminMenuScreen extends GetView<AdminMenuController> {
+  const AdminMenuScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,6 @@ class AdminMenuScrren extends GetView<AdminMenuController> {
 
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand,
         children: [
           Positioned.fill(
             child: ColorFiltered(
@@ -28,72 +27,57 @@ class AdminMenuScrren extends GetView<AdminMenuController> {
               child: Image.asset(AppAssets.background1, fit: BoxFit.cover),
             ),
           ),
+
           SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.6,
-                        height: Get.height * 0.3,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: 100.h),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      height: 20.h,
+                      child: Center(
                         child: Image.asset(
                           AppAssets.logo1,
+                          width: 60.w,
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.75,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Center(
-                              child: Text(
-                                'ADMIN MENU',
-                                style: textTheme.displayLarge,
-                              ),
-                            ),
 
-                            const Gap(20),
-                            TextfieldComponent(
-                              hintText: 'PIN',
-                              isObscure: true,
-                            ),
+                    Column(
+                      children: [
+                        Text('ADMIN MENU', style: textTheme.displayLarge),
 
-                            const Gap(25),
-                            ButtonComponent(
-                              text: 'UNLOCK',
-                              onPressed: () {
-                                Get.toNamed(Routes.EXPERIENCESELECTION1);
-                              },
-                            ),
-                          ],
+                        SizedBox(height: 3.h),
+
+                        TextfieldComponent(hintText: 'PIN', isObscure: true),
+
+                        SizedBox(height: 3.h),
+
+                        ButtonComponent(
+                          text: 'UNLOCK',
+                          borderRadius: 0.0,
+                          onPressed: () {
+                            Get.toNamed(Routes.EXPERIENCESELECTION1);
+                          },
                         ),
+                      ],
+                    ),
+
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 3.h),
+                      child: Image.asset(
+                        AppAssets.logo2,
+                        width: 55.w,
+                        height: 10.h,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                  ),
-
-                  Expanded(
-                    flex: 2,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.6,
-                        height: Get.width * 0.1,
-                        child: Image.asset(
-                          AppAssets.logo2,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

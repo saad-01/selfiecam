@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
 
 // ------------------------------------------------------------------
-// Reusable Widget: Custom Icon Button (Experience Selection ke liye)
+// Reusable Widget: Custom Icon Button IconData (Experience Selection ke liye)
 // ------------------------------------------------------------------
 
 class CustomIconButton extends StatelessWidget {
@@ -11,14 +12,11 @@ class CustomIconButton extends StatelessWidget {
   final Color? color;
   final double? iconSize;
   final Color? iconColor;
-
   final double? containerPadding;
   final double? borderRadius;
   final TextStyle? textStyle;
-
   final double? containerWidth;
   final double? containerHeight;
-
   final double? iconLabelSpacing;
 
   const CustomIconButton({
@@ -41,18 +39,18 @@ class CustomIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final IconData _icon = icon ?? Icons.help_outline;
     final Color _color = color ?? const Color(0xff008FC8);
-    final double _iconSize = iconSize ?? 40.0;
+    final double _iconSize = iconSize ?? 4.h;
     final Color _iconColor = iconColor ?? Colors.white;
-    final double _containerPadding = containerPadding ?? 12.0;
-    final double _borderRadius = borderRadius ?? 0.0;
-    final double _iconLabelSpacing = iconLabelSpacing ?? 8.0;
+    final double _containerPadding = containerPadding ?? 2.w;
+    final double _borderRadius = borderRadius ?? 2.w;
+    final double _iconLabelSpacing = iconLabelSpacing ?? 1.h;
 
-    final double? _containerWidth = containerWidth ?? 130;
-    final double? _containerHeight = containerHeight ?? 200;
+    final double _containerWidth = containerWidth ?? 30.w;
+    final double _containerHeight = containerHeight ?? 20.h;
 
-    final TextStyle _defaultTextStyle = const TextStyle(
+    final TextStyle _defaultTextStyle = TextStyle(
       fontFamily: 'Bebas',
-      fontSize: 28,
+      fontSize: 12.sp,
       fontWeight: FontWeight.w600,
       color: Colors.white,
     );
@@ -80,27 +78,26 @@ class CustomIconButton extends StatelessWidget {
 
     return InkWell(
       onTap: onPressed,
-
       child: Container(
         width: _containerWidth,
         height: _containerHeight,
-
         padding: EdgeInsets.all(_containerPadding),
         decoration: BoxDecoration(
           color: _color,
           borderRadius: BorderRadius.circular(_borderRadius),
         ),
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
-
           children: columnChildren,
         ),
       ),
     );
   }
 }
+// ------------------------------------------------------------------
+// Reusable Widget: Custom Icon Button Assets Path (Experience Selection ke liye)
+// ------------------------------------------------------------------
 
 class CustomIconButton1 extends StatelessWidget {
   final String icon;
@@ -109,14 +106,11 @@ class CustomIconButton1 extends StatelessWidget {
   final Color? color;
   final double? iconSize;
   final Color? iconColor;
-
   final double? containerPadding;
   final double? borderRadius;
   final TextStyle? textStyle;
-
   final double? containerWidth;
   final double? containerHeight;
-
   final double? iconLabelSpacing;
 
   const CustomIconButton1({
@@ -138,18 +132,18 @@ class CustomIconButton1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color _color = color ?? const Color(0xff008FC8);
-    final double _iconSize = iconSize ?? 40.0;
+    final double _iconSize = iconSize ?? 8.h;
     final Color _iconColor = iconColor ?? Colors.white;
-    final double _containerPadding = containerPadding ?? 12.0;
-    final double _borderRadius = borderRadius ?? 0.0;
-    final double _iconLabelSpacing = iconLabelSpacing ?? 8.0;
+    final double _containerPadding = containerPadding ?? 2.w;
+    final double _borderRadius = borderRadius ?? 2.w;
+    final double _iconLabelSpacing = iconLabelSpacing ?? 1.h;
 
-    final double? _containerWidth = containerWidth ?? 130;
-    final double? _containerHeight = containerHeight ?? 200;
+    final double _containerWidth = containerWidth ?? 18.w;
+    final double _containerHeight = containerHeight ?? 20.h;
 
-    final TextStyle _defaultTextStyle = const TextStyle(
+    final TextStyle _defaultTextStyle = TextStyle(
       fontFamily: 'Bebas',
-      fontSize: 28,
+      fontSize: 18.sp,
       fontWeight: FontWeight.w600,
       color: Colors.white,
     );
@@ -157,17 +151,16 @@ class CustomIconButton1 extends StatelessWidget {
 
     List<Widget> columnChildren = [];
 
-    if (icon != null) {
-      columnChildren.add(
-        SizedBox(height: 80, width: 80, child: Image.asset(icon)),
-      );
-    }
+    columnChildren.add(
+      SizedBox(
+        height: _iconSize,
+        width: _iconSize,
+        child: Image.asset(icon, fit: BoxFit.contain),
+      ),
+    );
 
     if (label != null && label!.isNotEmpty) {
-      if (icon != null) {
-        columnChildren.add(SizedBox(height: _iconLabelSpacing));
-      }
-
+      columnChildren.add(SizedBox(height: _iconLabelSpacing));
       columnChildren.add(
         Text(
           label!.toUpperCase(),
@@ -179,22 +172,83 @@ class CustomIconButton1 extends StatelessWidget {
 
     return InkWell(
       onTap: onPressed,
-
       child: Container(
         width: _containerWidth,
         height: _containerHeight,
-
         padding: EdgeInsets.all(_containerPadding),
         decoration: BoxDecoration(
           color: _color,
           borderRadius: BorderRadius.circular(_borderRadius),
         ),
-
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
-
           children: columnChildren,
+        ),
+      ),
+    );
+  }
+}
+// ------------------------------------------------------------------
+// Reusable Widget: Custom Icon Button Assets Path (Experience Selection ke liye)
+// ------------------------------------------------------------------
+
+class ApprovalButton extends StatelessWidget {
+  final String text;
+  final Color color;
+  final String iconAssetPath;
+  final VoidCallback onPressed;
+
+  const ApprovalButton({
+    super.key,
+    required this.text,
+    required this.color,
+    required this.iconAssetPath,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 10.h,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0.2.h),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              iconAssetPath,
+              height: 6.h,
+              width: 6.h,
+              color: Colors.white,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 2.w),
+              child: SizedBox(
+                height: 6.h,
+                child: const VerticalDivider(
+                  color: Colors.white,
+                  thickness: 1,
+                ),
+              ),
+            ),
+            Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Inter',
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -204,12 +258,10 @@ class CustomIconButton1 extends StatelessWidget {
 // ------------------------------------------------------------------
 // Reusable Widget: Utility Button (Refresh, Test Bandwidth, etc. ke liye)
 // ------------------------------------------------------------------
-
 class CustomUtilityButton extends StatelessWidget {
   final String? text;
   final Color? color;
   final VoidCallback? onPressed;
-
   final double? height;
   final double? borderRadius;
   final TextStyle? textStyle;
@@ -235,15 +287,15 @@ class CustomUtilityButton extends StatelessWidget {
     final String _text = text ?? 'BUTTON';
     final Color _color = color ?? const Color(0xFF00B09B);
     final VoidCallback? _onPressed = onPressed;
-    final double _height = height ?? 100.0;
-    final double _borderRadius = borderRadius ?? 0.0;
-    final double _horizontalPadding = horizontalPadding ?? 15.0;
-    final double _horizontalMargin = horizontalMargin ?? 5.0;
+    final double _height = height ?? 8.h;
+    final double _borderRadius = borderRadius ?? 2.w;
+    final double _horizontalPadding = horizontalPadding ?? 4.w;
+    final double _horizontalMargin = horizontalMargin ?? 2.w;
     final int _flex = flex ?? 1;
 
-    final TextStyle _defaultTextStyle = const TextStyle(
+    final TextStyle _defaultTextStyle = TextStyle(
       fontFamily: 'Bebas',
-      fontSize: 28,
+      fontSize: 18.sp,
       fontWeight: FontWeight.w600,
       color: Colors.white,
     );
@@ -257,11 +309,8 @@ class CustomUtilityButton extends StatelessWidget {
           onPressed: _onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: _color,
-
             minimumSize: Size.fromHeight(_height),
-
             padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
-
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(_borderRadius),
             ),

@@ -6,9 +6,116 @@ import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component.dart';
 import 'package:selfiecam1/presentation/component/textfield_component.dart';
+import 'package:sizer/sizer.dart';
 import 'controller/sign_in_controller.dart';
 
 class SignInScreen extends GetView<SignInController> {
+  const SignInScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          /// Background
+          Positioned.fill(
+            child: ColorFiltered(
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.5),
+                BlendMode.darken,
+              ),
+              child: Image.asset(AppAssets.background1, fit: BoxFit.cover),
+            ),
+          ),
+
+          /// Content
+          SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: 100.h, // 🔥 full screen height
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    /// Top Logo
+                    SizedBox(
+                      height: 18.h,
+                      child: Center(
+                        child: Image.asset(
+                          AppAssets.logo1,
+                          width: 60.w,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+
+                    /// Center Form
+                    Column(
+                      children: [
+                        Text('LOGIN', style: textTheme.displayLarge),
+
+                        SizedBox(height: 3.h),
+
+                        TextfieldComponent(hintText: 'ACCOUNT EMAIL'),
+                        SizedBox(height: 2.h),
+
+                        TextfieldComponent(
+                          hintText: 'PASSWORD',
+                          isObscure: true,
+                        ),
+                        SizedBox(height: 2.h),
+
+                        Text(
+                          'Forgot user or password?',
+                          style: textTheme.labelMedium,
+                        ),
+
+                        SizedBox(height: 2.h),
+
+                        ButtonComponent(
+                          text: 'GO',
+                          borderRadius: 0.0,
+                          onPressed: () {
+                            Get.toNamed(Routes.AUTHMENU);
+                          },
+                        ),
+
+                        SizedBox(height: 4.h),
+
+                        Divider(color: Colors.white, thickness: 0.3.h),
+
+                        SizedBox(height: 3.h),
+
+                        Text('NEW? JOIN FOR FREE', style: textTheme.labelLarge),
+                      ],
+                    ),
+
+                    /// Bottom Logo
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 3.h),
+                      child: Image.asset(
+                        AppAssets.logo2,
+                        width: 55.w,
+                        height: 10.h,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/* class SignInScreen extends GetView<SignInController> {
   const SignInScreen({super.key});
 
   @override
@@ -123,3 +230,4 @@ class SignInScreen extends GetView<SignInController> {
     );
   }
 }
+ */

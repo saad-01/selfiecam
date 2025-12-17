@@ -1,12 +1,16 @@
 import 'package:get/get.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/home/countdown_screen.dart';
+import 'package:selfiecam1/presentation/home/email_screen.dart';
+import 'package:selfiecam1/presentation/home/phone_screen.dart';
 import 'package:selfiecam1/presentation/home/preview_approve_screen.dart';
+import 'package:selfiecam1/presentation/home/send_it_to_screen.dart';
 import 'package:selfiecam1/presentation/home/welcome_2_screen.dart';
 import '../../presentation/auth/sign_in/admin_menu_scrren.dart';
 import '../../presentation/auth/sign_in/sign_in_screen.dart';
 import '../../presentation/home/experience_selection_1_screen.dart';
 import '../../presentation/home/experiemce_selection_2_screen.dart';
+import '../../presentation/home/send_it_to_me_2_screen.dart';
 import '../../presentation/home/welcome_1_screen.dart';
 import '../bindings/initial_bindings.dart';
 
@@ -19,7 +23,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.AUTHMENU,
-      page: () => const AdminMenuScrren(),
+      page: () => const AdminMenuScreen(),
       binding: InitialBindings(),
     ),
     GetPage(
@@ -50,6 +54,26 @@ class Nav {
     GetPage(
       name: Routes.PREVIEW,
       page: () => const PreviewApproveScreen(),
+      binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.SENDITTOME,
+      page: () => const SenItToMeScreen(),
+      binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.SENDITTOME2,
+      page: () => const SenItToMeScreen2(),
+      binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.EMAIL,
+      page: () => const Email(),
+      binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.PHONE,
+      page: () => const Phone(),
       binding: InitialBindings(),
     ),
   ];

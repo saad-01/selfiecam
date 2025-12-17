@@ -2,10 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
-import 'package:get/utils.dart';
-import 'package:selfiecam1/infrastructure/navigation/routes.dart';
-
+import 'package:sizer/sizer.dart';
 import '../../infrastructure/constants/app_assets.dart';
+import '../../infrastructure/navigation/routes.dart';
 
 class CountdownScreen extends StatefulWidget {
   const CountdownScreen({super.key});
@@ -34,13 +33,9 @@ class _CountdownScreenState extends State<CountdownScreen> {
   void _startCountdown() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_counter > 1) {
-        setState(() {
-          _counter--;
-        });
+        setState(() => _counter--);
       } else {
-        setState(() {
-          _isCounting = false;
-        });
+        setState(() => _isCounting = false);
         _timer?.cancel();
       }
     });
@@ -61,7 +56,6 @@ class _CountdownScreenState extends State<CountdownScreen> {
           Positioned.fill(
             child: Image.asset(AppAssets.background4, fit: BoxFit.fill),
           ),
-
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -69,24 +63,24 @@ class _CountdownScreenState extends State<CountdownScreen> {
                 Text(
                   _countdownText[_counter] ?? "",
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Bebas',
-                    fontSize: 90,
+                    fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
-                    shadows: [
+                    shadows: const [
                       Shadow(
-                        blurRadius: 5.0,
+                        blurRadius: 5,
                         color: Colors.black,
-                        offset: Offset(2.0, 2.0),
+                        offset: Offset(2, 2),
                       ),
                     ],
                   ),
                 ),
-                Gap(60),
+                Gap(6.h),
                 Container(
-                  width: 130,
-                  height: 130,
+                  width: 22.w,
+                  height: 22.w,
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.5),
                     shape: BoxShape.circle,
@@ -94,9 +88,9 @@ class _CountdownScreenState extends State<CountdownScreen> {
                   child: Center(
                     child: Text(
                       '$_counter',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Akshar',
-                        fontSize: 60,
+                        fontSize: 25.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -104,40 +98,40 @@ class _CountdownScreenState extends State<CountdownScreen> {
                   ),
                 ),
               ] else ...[
-                const Text(
+                Text(
                   "GET READY FOR\n4 QUICK SHOTS!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: 'Bebas',
-                    fontSize: 90,
+                    fontSize: 30.sp,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
-                    shadows: [
+                    shadows: const [
                       Shadow(
-                        blurRadius: 5.0,
+                        blurRadius: 5,
                         color: Colors.black,
-                        offset: Offset(2.0, 2.0),
+                        offset: Offset(2, 2),
                       ),
                     ],
                   ),
                 ),
-                Gap(120),
+                Gap(10.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
                     4,
                     (index) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      padding: EdgeInsets.symmetric(horizontal: 1.w),
                       child: InkWell(
                         onTap: () {
                           Get.toNamed(Routes.PREVIEW);
                         },
                         child: Container(
-                          width: 120,
-                          height: 150,
+                          width: 16.w,
+                          height: 22.w,
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
-                            border: Border.all(color: Colors.white, width: 2.0),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                         ),
                       ),

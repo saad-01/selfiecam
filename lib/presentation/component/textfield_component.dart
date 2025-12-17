@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sizer/sizer.dart';
 
 class TextfieldComponent extends StatelessWidget {
   final String? hintText;
@@ -28,38 +29,30 @@ class TextfieldComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Default values set karna agar fields null hon (Null Safety Check: ?? )
     final bool _isObscure = isObscure ?? false;
     final bool _enabled = enabled ?? true;
     final Color _backgroundColor = backgroundColor ?? const Color(0XffD9D9D9);
     final double _borderRadius = borderRadius ?? 0.0;
-    final double _verticalPadding = verticalPadding ?? 18.0;
-    final double _horizontalPadding = horizontalPadding ?? 15.0;
+    final double _verticalPadding = verticalPadding ?? 2.0.h;
+    final double _horizontalPadding = horizontalPadding ?? 4.w;
     final TextAlign _textAlign = textAlign ?? TextAlign.center;
-    // --- InputDecoration ---
+
     final inputDecoration = InputDecoration(
       hintText: hintText,
-
-      hintStyle: const TextStyle(
+      hintStyle: TextStyle(
         fontFamily: 'Akshar',
-        color: Color(0Xff8B8B8B),
-        fontSize: 35.0,
+        color: const Color(0Xff8B8B8B),
+        fontSize: 22.sp,
         fontWeight: FontWeight.w500,
       ),
-
-      // Borders ko remove karna
       border: InputBorder.none,
       focusedBorder: InputBorder.none,
       enabledBorder: InputBorder.none,
       disabledBorder: InputBorder.none,
-
-      // Content Padding
       contentPadding: EdgeInsets.symmetric(
         vertical: _verticalPadding,
         horizontal: _horizontalPadding,
       ),
-
-      isDense: true,
     );
 
     return Container(
@@ -67,7 +60,6 @@ class TextfieldComponent extends StatelessWidget {
         color: _backgroundColor,
         borderRadius: BorderRadius.circular(_borderRadius),
       ),
-
       child: TextField(
         controller: controller,
         obscureText: _isObscure,
@@ -75,13 +67,11 @@ class TextfieldComponent extends StatelessWidget {
         enabled: _enabled,
         textAlign: _textAlign,
         decoration: inputDecoration,
-
-        style: const TextStyle(
+        style: TextStyle(
           color: Colors.black,
-          fontSize: 35.0,
+          fontSize: 22.sp,
           fontFamily: 'Akshar',
         ),
-
         textCapitalization: TextCapitalization.characters,
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:sizer/sizer.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component1.dart';
 import '../../infrastructure/constants/app_assets.dart';
@@ -18,31 +19,30 @@ class Welcome1Screen extends StatelessWidget {
           Positioned.fill(
             child: Image.asset(AppAssets.background2, fit: BoxFit.fill),
           ),
-
           Column(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               CustomIconButton(
-                containerHeight: 150,
-                containerWidth: 150,
+                containerHeight: 14.h,
+                containerWidth: 14.h,
                 color: Colors.white,
-                borderRadius: 80,
+                borderRadius: 10.h,
                 icon: Icons.arrow_forward_rounded,
                 iconColor: Colors.black,
-                iconSize: 70,
+                iconSize: 6.h,
                 onPressed: () {
                   Get.toNamed(Routes.EXPERIENCESELECTION2);
                 },
               ),
-              Gap(50),
+              Gap(5.h),
               Text(
                 'TAP ANYWHERE TO START',
                 style: textTheme.labelLarge!.copyWith(
                   color: Colors.white,
-                  fontSize: 30,
+                  fontSize: 20.sp,
                 ),
               ),
-              Gap(150),
+              Gap(15.h),
             ],
           ),
         ],
