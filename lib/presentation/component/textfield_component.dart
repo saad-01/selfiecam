@@ -38,28 +38,17 @@ class TextfieldComponent extends StatelessWidget {
     final TextAlign _textAlign = textAlign ?? TextAlign.center;
 
     final inputDecoration = InputDecoration(
-      hintText: hintText,
-      hintStyle: TextStyle(
-        fontFamily: 'Akshar',
-        color: const Color(0Xff8B8B8B),
-        fontSize: 22.sp,
-        fontWeight: FontWeight.w500,
-      ),
+      hintText: hintText?.toUpperCase(),
+      hintStyle: TextStyle(fontFamily: 'Akshar', color: const Color(0Xff8B8B8B), fontSize: 22.sp, fontWeight: FontWeight.w500),
       border: InputBorder.none,
       focusedBorder: InputBorder.none,
       enabledBorder: InputBorder.none,
       disabledBorder: InputBorder.none,
-      contentPadding: EdgeInsets.symmetric(
-        vertical: _verticalPadding,
-        horizontal: _horizontalPadding,
-      ),
+      contentPadding: EdgeInsets.symmetric(vertical: _verticalPadding, horizontal: _horizontalPadding),
     );
 
     return Container(
-      decoration: BoxDecoration(
-        color: _backgroundColor,
-        borderRadius: BorderRadius.circular(_borderRadius),
-      ),
+      decoration: BoxDecoration(color: _backgroundColor, borderRadius: BorderRadius.circular(_borderRadius)),
       child: TextField(
         controller: controller,
         obscureText: _isObscure,
@@ -67,12 +56,7 @@ class TextfieldComponent extends StatelessWidget {
         enabled: _enabled,
         textAlign: _textAlign,
         decoration: inputDecoration,
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 22.sp,
-          fontFamily: 'Akshar',
-        ),
-        textCapitalization: TextCapitalization.characters,
+        style: TextStyle(color: Colors.black, fontSize: 22.sp, fontFamily: 'Akshar'),
       ),
     );
   }

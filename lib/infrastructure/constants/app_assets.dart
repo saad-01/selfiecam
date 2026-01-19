@@ -27,6 +27,7 @@ class AppAssets {
   static String background4 = '$imagesPath/bg-4.png';
   static String qr = '$imagesPath/qr.png';
   static String qr2 = '$imagesPath/qr_2.png';
+  static String demoFilter = '$imagesPath/demo_filter.png';
 
   //~~~~~~~~~~~~~~~~Animations~~~~~~~~~~~~~~~~~~~~~~~~~//
 

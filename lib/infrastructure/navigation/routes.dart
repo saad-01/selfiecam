@@ -6,6 +6,7 @@ class Routes {
   }
 
   static const SIGNIN = '/signInScreen';
+  static const SIGNUP = '/signUpScreen';
   static const AUTHMENU = '/adminMenuScreen';
   static const WELCOME1 = '/welcome1Screen';
   static const WELCOME2 = '/welcome2Screen';
@@ -17,4 +18,6 @@ class Routes {
   static const SENDITTOME2 = '/sendItToMeScreen2';
   static const EMAIL = '/emailScreen';
    static const PHONE = '/phoneScreen';
+   static const JOINEVENT = '/joinTheEventScreen';
+   static const FORGETWEBVIEW = '/forgetWebviewScreen';
 }

@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:selfiecam1/controller/experiences_controller.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component1.dart';
 import '../../infrastructure/constants/app_assets.dart';
 import 'package:sizer/sizer.dart';
 
-class ExperienceSelectionScreen1 extends StatelessWidget {
+class ExperienceSelectionScreen1 extends StatefulWidget {
   const ExperienceSelectionScreen1({super.key});
 
+  @override
+  State<ExperienceSelectionScreen1> createState() => _ExperienceSelectionScreen1State();
+}
+
+class _ExperienceSelectionScreen1State extends State<ExperienceSelectionScreen1> {
+  final controller = Get.put(ExperiencesController());
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;

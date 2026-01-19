@@ -1,5 +1,8 @@
 import 'package:get/get.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/event_join_screen.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/forget_webview.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/signup_webview.dart';
 import 'package:selfiecam1/presentation/home/countdown_screen.dart';
 import 'package:selfiecam1/presentation/home/email_screen.dart';
 import 'package:selfiecam1/presentation/home/phone_screen.dart';
@@ -19,62 +22,77 @@ class Nav {
     GetPage(
       name: Routes.SIGNIN,
       page: () => const SignInScreen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.FORGETWEBVIEW,
+      page: () => ForgetWebview(),
+      // binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.JOINEVENT,
+      page: () => const EventDropdownView(),
+      // binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.SIGNUP,
+      page: () => SignupWebview(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.AUTHMENU,
       page: () => const AdminMenuScreen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.WELCOME1,
       page: () => const Welcome1Screen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.WELCOME2,
       page: () => const Welcome2Screen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.EXPERIENCESELECTION1,
       page: () => const ExperienceSelectionScreen1(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.EXPERIENCESELECTION2,
       page: () => const ExperienceSelectionScreen2(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.COUNTDOWN,
       page: () => const CountdownScreen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.PREVIEW,
       page: () => const PreviewApproveScreen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.SENDITTOME,
       page: () => const SenItToMeScreen(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.SENDITTOME2,
       page: () => const SenItToMeScreen2(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.EMAIL,
       page: () => const Email(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
     GetPage(
       name: Routes.PHONE,
       page: () => const Phone(),
-      binding: InitialBindings(),
+      // binding: InitialBindings(),
     ),
   ];
 }

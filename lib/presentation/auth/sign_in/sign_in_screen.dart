@@ -1,233 +1,145 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
-import 'package:get/get_state_manager/src/simple/get_view.dart';
-import 'package:get/route_manager.dart';
+import 'package:get/get.dart';
 import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component.dart';
 import 'package:selfiecam1/presentation/component/textfield_component.dart';
 import 'package:sizer/sizer.dart';
-import 'controller/sign_in_controller.dart';
+import '../../../controller/sign_in_controller.dart';
 
-class SignInScreen extends GetView<SignInController> {
+class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
+
+  @override
+  State<SignInScreen> createState() => _SignInScreenState();
+}
+
+class _SignInScreenState extends State<SignInScreen> {
+  final controller = Get.put(SignInController());
+  bool _isImagePrecached = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isImagePrecached) {
+      precacheImage(AssetImage(AppAssets.background1), context);
+      precacheImage(AssetImage(AppAssets.logo2), context);
+      precacheImage(AssetImage(AppAssets.logo1), context);
+      _isImagePrecached = true;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    unawaited(controller.loadAllInfo());
+  }
 
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          /// Background
-          Positioned.fill(
-            child: ColorFiltered(
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.5),
-                BlendMode.darken,
-              ),
-              child: Image.asset(AppAssets.background1, fit: BoxFit.cover),
-            ),
-          ),
-
-          /// Content
-          SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: 100.h, // 🔥 full screen height
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.w),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    /// Top Logo
-                    SizedBox(
-                      height: 18.h,
-                      child: Center(
-                        child: Image.asset(
-                          AppAssets.logo1,
-                          width: 60.w,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-
-                    /// Center Form
-                    Column(
-                      children: [
-                        Text('LOGIN', style: textTheme.displayLarge),
-
-                        SizedBox(height: 3.h),
-
-                        TextfieldComponent(hintText: 'ACCOUNT EMAIL'),
-                        SizedBox(height: 2.h),
-
-                        TextfieldComponent(
-                          hintText: 'PASSWORD',
-                          isObscure: true,
-                        ),
-                        SizedBox(height: 2.h),
-
-                        Text(
-                          'Forgot user or password?',
-                          style: textTheme.labelMedium,
-                        ),
-
-                        SizedBox(height: 2.h),
-
-                        ButtonComponent(
-                          text: 'GO',
-                          borderRadius: 0.0,
-                          onPressed: () {
-                            Get.toNamed(Routes.AUTHMENU);
-                          },
-                        ),
-
-                        SizedBox(height: 4.h),
-
-                        Divider(color: Colors.white, thickness: 0.3.h),
-
-                        SizedBox(height: 3.h),
-
-                        Text('NEW? JOIN FOR FREE', style: textTheme.labelLarge),
-                      ],
-                    ),
-
-                    /// Bottom Logo
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 3.h),
-                      child: Image.asset(
-                        AppAssets.logo2,
-                        width: 55.w,
-                        height: 10.h,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ],
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            /// Background
+            Positioned.fill(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.darken),
+                child: FadeInImage(
+                  placeholder: AssetImage(AppAssets.background1), // same image
+                  image: AssetImage(AppAssets.background1),
+                  fit: BoxFit.cover,
+                  fadeInDuration: const Duration(milliseconds: 150),
                 ),
               ),
             ),
-          ),
-        ],
+
+            /// Content
+            SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: 100.h, // 🔥 full screen height
+                ),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      /// Top Logo
+                      SizedBox(
+                        height: 18.h,
+                        child: Center(
+                          child: Image.asset(AppAssets.logo1, width: 60.w, fit: BoxFit.contain),
+                        ),
+                      ),
+
+                      /// Center Form
+                      Column(
+                        children: [
+                          Text('LOGIN', style: textTheme.displayLarge),
+
+                          SizedBox(height: 3.h),
+
+                          TextfieldComponent(hintText: 'ACCOUNT EMAIL', controller: controller.emailcontroller),
+                          SizedBox(height: 2.h),
+
+                          TextfieldComponent(hintText: 'PASSWORD', isObscure: true, controller: controller.passwordcontroller),
+                          SizedBox(height: 2.h),
+
+                          InkWell(
+                            onTap: () {
+                              Get.toNamed(Routes.FORGETWEBVIEW);
+                            },
+                            child: Text('Forgot user or password?', style: textTheme.labelMedium),
+                          ),
+
+                          SizedBox(height: 2.h),
+
+                          ButtonComponent(
+                            text: 'GO',
+                            borderRadius: 0.0,
+                            onPressed: () async {
+                              FocusScope.of(context).unfocus();
+                              controller.loginApi();
+                            },
+                          ),
+
+                          SizedBox(height: 4.h),
+
+                          Divider(color: Colors.white, thickness: 0.3.h),
+
+                          SizedBox(height: 3.h),
+
+                          InkWell(
+                            onTap: () {
+                              Get.toNamed(Routes.SIGNUP);
+                            },
+                            child: Text('NEW? JOIN FOR FREE', style: textTheme.labelLarge),
+                          ),
+                        ],
+                      ),
+
+                      /// Bottom Logo
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 3.h),
+                        child: Image.asset(AppAssets.logo2, width: 55.w, height: 10.h, fit: BoxFit.contain),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-
-/* class SignInScreen extends GetView<SignInController> {
-  const SignInScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned.fill(
-            child: ColorFiltered(
-              colorFilter: ColorFilter.mode(
-                Colors.black.withOpacity(0.5),
-                BlendMode.darken,
-              ),
-              child: Image.asset(AppAssets.background1, fit: BoxFit.cover),
-            ),
-          ),
-
-          SingleChildScrollView(
-            child: IntrinsicHeight(
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.6,
-                        height: Get.height * 0.3,
-                        child: Image.asset(
-                          AppAssets.logo1,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 3,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.75,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Center(
-                              child: Text(
-                                'LOGIN',
-                                style: textTheme.displayLarge,
-                              ),
-                            ),
-
-                            const Gap(20),
-                            TextfieldComponent(hintText: 'ACCOUNT EMAIL'),
-                            const Gap(15),
-                            TextfieldComponent(
-                              hintText: 'PASSWORD',
-                              isObscure: true,
-                            ),
-                            const Gap(15),
-
-                            Center(
-                              child: Text(
-                                'Forgot user or password?',
-                                style: textTheme.labelMedium,
-                              ),
-                            ),
-
-                            const Gap(25),
-                            ButtonComponent(
-                              text: 'GO',
-                              onPressed: () {
-                                Get.toNamed(Routes.AUTHMENU);
-                              },
-                            ),
-                            const Gap(50),
-                            const Divider(color: Colors.white, thickness: 2),
-                            const Gap(50),
-
-                            Center(
-                              child: Text(
-                                'NEW? JOIN FOR FREE',
-                                style: textTheme.labelLarge,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  // ...
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                      child: SizedBox(
-                        width: Get.width * 0.6,
-                        height: Get.width * 0.1,
-                        child: Image.asset(
-                          AppAssets.logo2,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
- */

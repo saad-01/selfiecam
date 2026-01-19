@@ -8,8 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 
 import '../constants/app_colors.dart';
-import 'logger_util.dart';
-
+import 'logger.dart';
 
 class Utilities {
   static Future<bool> isInternetAvailable({bool showToast = true}) async {
@@ -18,43 +17,32 @@ class Utilities {
       final List<ConnectivityResult> connectivityResult = await Connectivity().checkConnectivity();
       if (connectivityResult == ConnectivityResult.none) {
         if (showToast) {
-          Utilities.showToast(
-            toastMsg: 'No internet connection. Please check your WiFi or mobile data.',
-            isSuccess: false,
-          );
+          Utilities.showToast(toastMsg: 'No internet connection. Please check your WiFi or mobile data.', isSuccess: false);
         }
         return false;
       }
 
       // Perform a lightweight DNS lookup instead of full HTTP request
-      final List<InternetAddress> result = await InternetAddress.lookup('google.com').timeout(
-        const Duration(seconds: 3),
-        onTimeout: () => throw TimeoutException('Connection timed out'),
-      );
+      final List<InternetAddress> result = await InternetAddress.lookup(
+        'google.com',
+      ).timeout(const Duration(seconds: 3), onTimeout: () => throw TimeoutException('Connection timed out'));
 
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        LogUtil.logTrace('DNS lookup successful for google.com');
+        Logger.log('DNS lookup successful for google.com');
         return true;
       }
 
       return false;
     } catch (e) {
       if (showToast) {
-        Utilities.showToast(
-          toastMsg: 'Internet connection is not working. Please try again later.',
-          isSuccess: false,
-        );
+        Utilities.showToast(toastMsg: 'Internet connection is not working. Please try again later.', isSuccess: false);
       }
-      LogUtil.logError('isInternetAvailable: $e');
+      Logger.log('isInternetAvailable: $e');
       return false;
     }
   }
 
-  static void showToast({
-    required String toastMsg,
-    Toast toastLength = Toast.LENGTH_SHORT,
-    required bool isSuccess,
-  }) {
+  static void showToast({required String toastMsg, Toast toastLength = Toast.LENGTH_SHORT, required bool isSuccess}) {
     Fluttertoast.showToast(
       msg: toastMsg,
       toastLength: toastLength,
@@ -83,7 +71,6 @@ class Utilities {
       borderRadius: borderRadius ?? 12,
       dismissDirection: DismissDirection.startToEnd,
     );
-
   }
 
   static bool isTablet(BuildContext context) {
@@ -100,12 +87,11 @@ class Utilities {
       final DateTime date = DateTime.parse(dateStr);
 
       // Format the date into dd/MM
-      final String formattedDate =
-          "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
+      final String formattedDate = "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}";
       return formattedDate;
     } catch (e) {
       // Handle errors (invalid format, etc.)
-      LogUtil.logError('Error parsing date: $e');
+      Logger.log('Error parsing date: $e');
       return '';
     }
   }
@@ -145,54 +131,54 @@ class Utilities {
   //   }
   // }
 
-///INPUT VALIDATORS
+  ///INPUT VALIDATORS
 
-// String? nameValidator(String? value) {
-//   if (value == null || value.isEmpty) {
-//     return "Name can't be empty";
-//   }
-//   if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
-//     return 'Please enter a valid name';
-//   }
-//   return null;
-// }
-//
-// String? emailValidator(String? value) {
-//   if (value == null || value.isEmpty) {
-//     return "Email can't be empty";
-//   }
-//   // Add a simple email regex for validation
-//   final RegExp regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-//   if (!regex.hasMatch(value)) {
-//     return 'Enter a valid email address';
-//   }
-//   return null;
-// }
-//
-// String? passwordValidator(String? value) {
-//   if (value == null || value.isEmpty) {
-//     return "Password can't be empty";
-//   }
-//   if (value.length < 8) {
-//     return 'Password must be at least 8 characters long';
-//   }
-//   return null;
-// }
-//
-// String? confirmPasswordValidator(String? password, String? confirmPassword) {
-//   if (confirmPassword == null || confirmPassword.isEmpty) {
-//     return "Confirm password can't be empty";
-//   }
-//   if (password != confirmPassword) {
-//     return 'Passwords do not match';
-//   }
-//   return null;
-// }
-//
-// String? valueNotSelectedValidator(String? value) {
-//   if (value == null || value.isEmpty) {
-//     return "Value can't be empty";
-//   }
-//   return null;
-// }
+  // String? nameValidator(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return "Name can't be empty";
+  //   }
+  //   if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
+  //     return 'Please enter a valid name';
+  //   }
+  //   return null;
+  // }
+  //
+  // String? emailValidator(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return "Email can't be empty";
+  //   }
+  //   // Add a simple email regex for validation
+  //   final RegExp regex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+  //   if (!regex.hasMatch(value)) {
+  //     return 'Enter a valid email address';
+  //   }
+  //   return null;
+  // }
+  //
+  // String? passwordValidator(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return "Password can't be empty";
+  //   }
+  //   if (value.length < 8) {
+  //     return 'Password must be at least 8 characters long';
+  //   }
+  //   return null;
+  // }
+  //
+  // String? confirmPasswordValidator(String? password, String? confirmPassword) {
+  //   if (confirmPassword == null || confirmPassword.isEmpty) {
+  //     return "Confirm password can't be empty";
+  //   }
+  //   if (password != confirmPassword) {
+  //     return 'Passwords do not match';
+  //   }
+  //   return null;
+  // }
+  //
+  // String? valueNotSelectedValidator(String? value) {
+  //   if (value == null || value.isEmpty) {
+  //     return "Value can't be empty";
+  //   }
+  //   return null;
+  // }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/simple/get_view.dart';
 import 'package:get/route_manager.dart';
 import 'package:sizer/sizer.dart';
-import 'controller/admin_menu_controller.dart';
+import '../../../controller/admin_menu_controller.dart';
 import '../../../infrastructure/constants/app_assets.dart';
 import '../../../infrastructure/navigation/routes.dart';
 import '../../component/button_component.dart';
