@@ -11,4 +11,6 @@ class ApiUrls {
   static const String joinEvent = 'devices';
   static const String joinEventDetails = 'devices/joined/event';
   static const String uploadImage = 'image/upload';
+  static const String aiGenerateStyle = 'ai/generate-style';
+  static const String imageUploadAiStyle = 'image/upload/ai-style';
 }

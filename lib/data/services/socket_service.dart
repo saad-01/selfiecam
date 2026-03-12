@@ -1,4 +1,7 @@
 import 'package:get/get.dart';
+import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/data/models/branding_model.dart';
+import 'package:selfiecam1/data/models/experiences_model.dart';
 import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
@@ -58,6 +61,16 @@ class SocketService extends GetxService {
     socket.on('device:removed', (data) async {
       await PrefUtils().clearPreferencesData();
       Get.offAllNamed(Routes.SIGNIN);
+    });
+    socket.on('event:branding-updated', (data) async {
+      Logger.log("Received branding update from server");
+      DeviceController.to.branding.value = Branding.fromJson(data['branding']);
+      DeviceController.to.update();
+    });
+    socket.on('event:experiences-updated', (data) async {
+      Logger.log("Received branding update from server");
+      DeviceController.to.experiences.value = Experiences.fromJson(data['experiences']);
+      DeviceController.to.update();
     });
   }
 }

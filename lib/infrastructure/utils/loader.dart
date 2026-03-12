@@ -14,15 +14,15 @@ class LoaderService extends GetxService {
         onWillPop: () async => false,
         child: Center(
           child: Container(
-            height: 100,
-            width: 100,
+            height: 200,
+            width: 200,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               color: Colors.black38,
             ),
             child: const Center(
               child: CupertinoActivityIndicator(
-                radius: 20,
+                radius: 60,
                 color: Colors.white,
               ),
             ),

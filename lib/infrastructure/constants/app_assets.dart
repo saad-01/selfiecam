@@ -16,6 +16,9 @@ class AppAssets {
   static String retake = '$iconPath/retake.png';
   static String sendme = '$iconPath/sendme.png';
   static String takePhoto = '$iconPath/take_photo.png';
+  static String alignLeft = '$iconPath/align-left.svg';
+  static String aiPhoto = '$iconPath/ai-photo.png';
+  static String lookIntoCamera = '$iconPath/arrow-alt-circle-up.svg';
 
   //~~~~~~~~~~~~~~~~Images~~~~~~~~~~~~~~~~~~~~~~~~~//
 
@@ -28,6 +31,7 @@ class AppAssets {
   static String qr = '$imagesPath/qr.png';
   static String qr2 = '$imagesPath/qr_2.png';
   static String demoFilter = '$imagesPath/demo_filter.png';
+  static String demoOverlay = '$imagesPath/default_overlay.png';
 
   //~~~~~~~~~~~~~~~~Animations~~~~~~~~~~~~~~~~~~~~~~~~~//
 

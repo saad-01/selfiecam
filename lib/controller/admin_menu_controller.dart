@@ -1,7 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class AdminMenuController extends GetxController {
-
+  final pinController = TextEditingController();
 
   final count = 0.obs;
   @override

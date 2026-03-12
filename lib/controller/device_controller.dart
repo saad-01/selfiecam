@@ -1,19 +1,29 @@
 import 'dart:async';
-
-import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:selfiecam1/controller/cam_controller.dart';
+import 'package:selfiecam1/data/models/branding_model.dart';
+import 'package:selfiecam1/data/models/experiences_model.dart';
 import 'package:selfiecam1/data/services/socket_service.dart';
+import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
+import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
+import 'package:selfiecam1/infrastructure/utils/api_client.dart';
+import 'package:selfiecam1/infrastructure/utils/custom_snackbar.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
+import 'package:selfiecam1/presentation/home/ai_style_preview.dart';
+import 'package:selfiecam1/presentation/home/countdown_screen.dart';
 
 import '../infrastructure/utils/logger.dart';
 
 class DeviceController extends GetxController {
+  static DeviceController get to => Get.find();
   final FlutterDeviceInfoPlus _deviceInfo = const FlutterDeviceInfoPlus();
-  DeviceInformation? _deviceInformation;
-  BatteryInfo? _batteryInfo;
+  DeviceInformation? deviceInformation;
+  final branding = Rxn<Branding>();
+  final experiences = Rxn<Experiences>();
+  BatteryInfo? batteryInfo;
   String? pkgVersion;
   dynamic iosDeviceInfo;
   NetworkInfo? _networkInfo;
@@ -25,7 +35,7 @@ class DeviceController extends GetxController {
       // Demonstrate all available methods
       final platform = _deviceInfo.getCurrentPlatform();
       final deviceInfo = await _deviceInfo.getDeviceInfo();
-      final batteryInfo = await _deviceInfo.getBatteryInfo();
+      final _batteryInfo = await _deviceInfo.getBatteryInfo();
       final sensorInfo = await _deviceInfo.getSensorInfo();
       final networkInfo = await _deviceInfo.getNetworkInfo();
       debugPrint('========== DEVICE INFO DEBUG START ==========');
@@ -62,10 +72,10 @@ class DeviceController extends GetxController {
       debugPrint('Refresh Rate: ${deviceInfo.displayInfo.refreshRate}');
 
       debugPrint('--- Battery ---');
-      if (batteryInfo != null) {
-        debugPrint('Level: ${batteryInfo.batteryLevel}%');
-        debugPrint('Status: ${batteryInfo.chargingStatus}');
-        debugPrint('Health: ${batteryInfo.batteryHealth}');
+      if (_batteryInfo != null) {
+        debugPrint('Level: ${_batteryInfo.batteryLevel}%');
+        debugPrint('Status: ${_batteryInfo.chargingStatus}');
+        debugPrint('Health: ${_batteryInfo.batteryHealth}');
       } else {
         debugPrint('Battery Info: null');
       }
@@ -85,14 +95,14 @@ class DeviceController extends GetxController {
       debugPrint('MAC: ${networkInfo.macAddress}');
 
       debugPrint('========== DEVICE INFO DEBUG END ==========');
-      _deviceInformation = deviceInfo;
-      _batteryInfo = batteryInfo;
+      deviceInformation = deviceInfo;
+      batteryInfo = _batteryInfo;
       sendHeartbeat(
-        batteryLevel: _batteryInfo!.batteryLevel,
-        batteryCharging: _batteryInfo!.isCharging,
-        storageTotal: _deviceInformation?.memoryInfo.totalStorageSpace,
-        storageUsed: _deviceInformation?.memoryInfo.usedStorageSpace,
-        storageFree: _deviceInformation?.memoryInfo.availableStorageSpace,
+        batteryLevel: batteryInfo!.batteryLevel,
+        batteryCharging: batteryInfo!.isCharging,
+        storageTotal: deviceInformation?.memoryInfo.totalStorageSpace,
+        storageUsed: deviceInformation?.memoryInfo.usedStorageSpace,
+        storageFree: deviceInformation?.memoryInfo.availableStorageSpace,
         wifiConnected: _networkInfo?.isConnected,
         wifiStrength: 92,
         cameraReady: true,
@@ -101,11 +111,11 @@ class DeviceController extends GetxController {
       SocketService.socket.emit("event:join", {"eventId": PrefUtils().getString("eventId")});
       heartbeatTimer = Timer.periodic(Duration(minutes: 1), (timer) {
         sendHeartbeat(
-          batteryLevel: _batteryInfo!.batteryLevel,
-          batteryCharging: _batteryInfo!.isCharging,
-          storageTotal: _deviceInformation?.memoryInfo.totalStorageSpace,
-          storageUsed: _deviceInformation?.memoryInfo.usedStorageSpace,
-          storageFree: _deviceInformation?.memoryInfo.availableStorageSpace,
+          batteryLevel: batteryInfo!.batteryLevel,
+          batteryCharging: batteryInfo!.isCharging,
+          storageTotal: deviceInformation?.memoryInfo.totalStorageSpace,
+          storageUsed: deviceInformation?.memoryInfo.usedStorageSpace,
+          storageFree: deviceInformation?.memoryInfo.availableStorageSpace,
           wifiConnected: _networkInfo?.isConnected,
           wifiStrength: 92,
           cameraReady: true,
@@ -140,5 +150,87 @@ class DeviceController extends GetxController {
       'cameraReady': cameraReady,
       'cameraError': cameraError ?? '',
     });
+  }
+  String referenceImageUrl = "";
+  String styleId = "";
+  dynamic experienceData = {}.obs;
+  Future<void> getJoinedEvent() async {
+    var response = await ApiCalls.getAPICall(url: ApiUrls.joinEventDetails);
+    if (response.statusCode == 200) {
+      branding.value = Branding.fromJson(response.data['data']['lastEventId']['branding']);
+      experiences.value = Experiences.fromJson(response.data['data']['lastEventId']['experiences']);
+      experienceData = response.data['data']['lastEventId']['experiences'];
+
+      Logger.log("Branding loaded: ${branding.value?.homeOverlay ?? ''}");
+    } else {}
+  }
+
+  List<ExperienceItem> getEnabledExperiences(Experiences exp) {
+    return [
+      if (exp.photo.enabled)
+        ExperienceItem(
+          key: 'photo',
+          label: 'Photo',
+          icon: AppAssets.selfie,
+          onTap: () => Get.to(() => CountdownScreen(type: 'Photo')),
+        ),
+
+      if (exp.boomerang.enabled)
+        ExperienceItem(
+          key: 'boomerang',
+          label: 'Boomerang',
+          icon: AppAssets.boomerang,
+          onTap: () => Get.to(() => CountdownScreen(type: 'Boomerang')),
+        ),
+
+      if (exp.gif.enabled)
+        ExperienceItem(
+          key: 'gif',
+          label: 'GIF',
+          icon: AppAssets.gif,
+          onTap: () {
+            CameraControllerX.to.capturedFile1 = null;
+            CameraControllerX.to.capturedFile2 = null;
+            CameraControllerX.to.capturedFile3 = null;
+            CameraControllerX.to.capturedFile4 = null;
+            Get.to(() => CountdownScreen(type: 'Gif'));
+          },
+        ),
+
+      if (exp.shoutout.enabled)
+        ExperienceItem(
+          key: 'shoutout',
+          label: 'Shoutout',
+          icon: AppAssets.shoutout,
+          onTap: () => Get.to(() => CountdownScreen(type: 'Shoutout')),
+        ),
+
+      if (exp.slowMotion.enabled)
+        ExperienceItem(
+          key: 'slowmo',
+          label: 'Slowmo',
+          icon: AppAssets.slowmo,
+          onTap: () => Get.to(() => CountdownScreen(type: 'Slomo')),
+        ),
+
+      if (exp.aiStyles.enabled)
+        ExperienceItem(
+          key: 'ai',
+          label: 'AI Photo',
+          icon: AppAssets.aiPhoto,
+          onTap: () {
+            if (experiences.value?.aiStyles != null && experiences.value!.aiStyles.styles.isNotEmpty) {
+              var style = experiences.value!.aiStyles.styles[0];
+              if (style['enabled'] == true) {
+                referenceImageUrl = style['referenceImage'] ?? '';
+                styleId = style['id'] ?? '';
+              }
+              Get.to(() => AiStylePreview(aiImageUrl: referenceImageUrl,));
+            } else {
+              CustomSnackbar.showInfo("No AI styles are currently configured for this event.");
+            }
+          },
+        ),
+    ];
   }
 }

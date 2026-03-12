@@ -1,4 +1,8 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/data/services/socket_service.dart';
 import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/api_client.dart';
@@ -6,6 +10,7 @@ import 'package:selfiecam1/infrastructure/utils/custom_snackbar.dart';
 import 'package:selfiecam1/infrastructure/utils/loader.dart';
 import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
+import 'package:sizer/sizer.dart';
 
 class EventJoinController extends GetxController {
   final RxList<dynamic> eventsList = <dynamic>[].obs;
@@ -52,11 +57,15 @@ class EventJoinController extends GetxController {
       PrefUtils().saveString("eventJoined", "true");
       Logger.log("Joined Event: ${response.data['data']['lastEventId']['eventName']}");
       PrefUtils().saveString("eventName", response.data['data']['lastEventId']['eventName']);
-      Get.offAllNamed(Routes.WELCOME1);
+      await DeviceController.to.getJoinedEvent();
+      SocketService.init();
+      unawaited(DeviceController.to.loadAllInfo());
+      Get.offAllNamed(Routes.EXPERIENCESELECTION2);
     } else {
       CustomSnackbar.showError("${response.data ?? 'Failed to join event'}");
     }
   }
+
   Future<void> getDeviceById() async {
     var response = await ApiCalls.getAPICall(url: "${ApiUrls.joinEvent}/${PrefUtils().getString("deviceId")}", isAuth: true);
     if (response.statusCode == 200) {

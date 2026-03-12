@@ -88,7 +88,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                           SizedBox(height: 3.h),
 
-                          TextfieldComponent(hintText: 'ACCOUNT EMAIL', controller: controller.emailcontroller),
+                          TextfieldComponent(hintText: 'ACCOUNT EMAIL', controller: controller.emailcontroller, keyboardType: TextInputType.emailAddress,),
                           SizedBox(height: 2.h),
 
                           TextfieldComponent(hintText: 'PASSWORD', isObscure: true, controller: controller.passwordcontroller),

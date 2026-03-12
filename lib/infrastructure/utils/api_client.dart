@@ -49,7 +49,12 @@ class ApiCalls {
               "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995",
             },
           )
-        : Options(headers: {"Content-Type": "application/json", "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995"});
+        : Options(
+            headers: {
+              "Content-Type": "application/json",
+              "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995",
+            },
+          );
   }
 
   ///
@@ -84,7 +89,7 @@ class ApiCalls {
   ///bodyParams : pass body params
   ///isAuth : pass false if you want to call post API without auth token true is set as defualt
   ///
-  static Future<ResponseModel> multipartRequest(){
+  static Future<ResponseModel> multipartRequest() {
     return Future.value(ResponseModel(statusCode: 200, data: ''));
   }
 
@@ -217,13 +222,14 @@ class ApiCalls {
       if (isAuth) {
         Logger.log('Bearer ${PrefUtils().getUserToken()}');
       }
-
+     Logger.log("header: ${getAuth(isAuth, eventJoined: eventJoined).headers}");
       final response = await dioClient.post(
         ApiUrls.baseUrl + url,
         data: bodyParams,
         options: getAuth(isAuth, eventJoined: eventJoined),
       );
       Logger.log("Status Code: ${response.statusCode}");
+ 
       Logger.log("Response: ${response.data}");
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
         return ResponseModel(data: response.data, statusCode: 200);
@@ -422,29 +428,29 @@ class ApiCalls {
 
       return ResponseModel(statusCode: 401, data: error.response?.data['message']);
     } else if (error.response?.statusCode == 403) {
-      return ResponseModel(statusCode: 403, data: error.response?.data['detail']);
+      return ResponseModel(statusCode: 403, data: error.response?.data['message']);
     } else if (error.response?.statusCode == 400) {
       // G.CustomSnackbar.showError( error.response?.data?['errors'][0]??'');
-      if (isShowError) Logger.log(error.response?.data['detail'] ?? '');
+      if (isShowError) Logger.log(error.response?.data['message'] ?? '');
 
-      return ResponseModel(statusCode: 400, data: error.response?.data['detail'] ?? '');
+      return ResponseModel(statusCode: 400, data: error.response?.data['message'] ?? '');
     } else if (error.response?.statusCode == 500) {
-      if (isShowError) Logger.log(error.response?.data['detail'] ?? error.response?.data);
+      if (isShowError) Logger.log(error.response?.data['message'] ?? error.response?.data);
       Logger.log("status code: ${error.response}");
       return ResponseModel(statusCode: 500, data: error.response?.data);
     } else if (error.response?.statusCode == 501) {
       Logger.log("status code: ${error.response}");
-      if (isShowError) Logger.log(error.response?.data['detail']);
+      if (isShowError) Logger.log(error.response?.data['message']);
 
-      return ResponseModel(statusCode: 501, data: error.response?.data['detail']);
+      return ResponseModel(statusCode: 501, data: error.response?.data['message']);
     } else if (error.response?.statusCode == 502) {
-      if (isShowError) Logger.log(error.response?.data['detail']);
+      if (isShowError) Logger.log(error.response?.data['message']);
 
       Logger.log("status code: ${error.response}");
-      return ResponseModel(statusCode: 502, data: error.response?.data['detail']);
+      return ResponseModel(statusCode: 502, data: error.response?.data['message']);
     } else if (error.response?.statusCode == 404) {
-      if (isShowError) Logger.log(error.response?.data['detail'] ?? '');
-      return ResponseModel(statusCode: -1, data: error.response?.data['detail'] ?? '');
+      if (isShowError) Logger.log(error.response?.data['message'] ?? '');
+      return ResponseModel(statusCode: -1, data: error.response?.data['message'] ?? '');
       // throw ApiResponseException(error.response?.data?['errors'][0] ?? '');
     } else if (error.response?.statusCode == 409) {
       if (isShowError) {

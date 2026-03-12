@@ -33,7 +33,7 @@ class TextfieldComponent extends StatelessWidget {
     final bool _enabled = enabled ?? true;
     final Color _backgroundColor = backgroundColor ?? const Color(0XffD9D9D9);
     final double _borderRadius = borderRadius ?? 0.0;
-    final double _verticalPadding = verticalPadding ?? 2.0.h;
+    final double _verticalPadding = verticalPadding ?? 1.0.h;
     final double _horizontalPadding = horizontalPadding ?? 4.w;
     final TextAlign _textAlign = textAlign ?? TextAlign.center;
 
@@ -44,6 +44,8 @@ class TextfieldComponent extends StatelessWidget {
       focusedBorder: InputBorder.none,
       enabledBorder: InputBorder.none,
       disabledBorder: InputBorder.none,
+      // isDense: true,
+
       contentPadding: EdgeInsets.symmetric(vertical: _verticalPadding, horizontal: _horizontalPadding),
     );
 

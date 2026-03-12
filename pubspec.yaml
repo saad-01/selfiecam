@@ -60,6 +60,10 @@ dependencies:
   uuid: ^4.5.2
   flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.1
+  cached_network_image: ^3.4.1
+  google_fonts: ^6.3.2
+  ffmpeg_kit_flutter_new: ^3.1.0
+  video_player: ^2.10.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

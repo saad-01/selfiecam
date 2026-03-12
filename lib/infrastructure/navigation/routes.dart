@@ -20,4 +20,6 @@ class Routes {
    static const PHONE = '/phoneScreen';
    static const JOINEVENT = '/joinTheEventScreen';
    static const FORGETWEBVIEW = '/forgetWebviewScreen';
+   static const SETTINGS = '/settingsScreen';
+   static const SPLASH = '/splashScreen';
 }

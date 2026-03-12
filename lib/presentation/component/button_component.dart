@@ -29,7 +29,7 @@ class ButtonComponent extends StatelessWidget {
     final String _text = text ?? 'BUTTON';
     final Color _backgroundColor = backgroundColor ?? const Color(0xffE6FF4B);
     final double _borderRadius = borderRadius ?? 3.w;
-    final double _verticalPadding = verticalPadding ?? 2.5.h;
+    final double _verticalPadding = verticalPadding ?? 2.h;
     final double _horizontalPadding = horizontalPadding ?? 4.w;
 
     final TextStyle _defaultTextStyle = TextStyle(

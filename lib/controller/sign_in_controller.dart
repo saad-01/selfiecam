@@ -1,11 +1,13 @@
-import 'dart:convert';
+import 'dart:async';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:selfiecam1/controller/device_controller.dart';
 import 'package:selfiecam1/data/services/device_id_service.dart';
+import 'package:selfiecam1/data/services/socket_service.dart';
 import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/api_client.dart';
@@ -15,8 +17,10 @@ import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
 
 class SignInController extends GetxController {
-  final emailcontroller = TextEditingController();
-  final passwordcontroller = TextEditingController();
+  final emailcontroller = TextEditingController(text: "m.saadashraf186@gmail.com");
+  final passwordcontroller = TextEditingController(text: "Saad@163");
+  // final emailcontroller = TextEditingController();
+  // final passwordcontroller = TextEditingController();
   final loader = Get.find<LoaderService>();
   final FlutterDeviceInfoPlus _deviceInfo = const FlutterDeviceInfoPlus();
   DeviceInformation? _deviceInformation;
@@ -140,6 +144,8 @@ class SignInController extends GetxController {
           await PrefUtils().clearPreferencesData();
           PrefUtils().saveString("deviceToken", data['deviceToken']);
           PrefUtils().saveString("deviceId", data['device']['deviceId']);
+          PrefUtils().saveString("password", passwordcontroller.text.trim());
+          PrefUtils().saveString("email", emailcontroller.text.trim());
           await getDeviceById();
           loader.hide();
           // Get.offAllNamed(Routes.JOINEVENT);
@@ -164,7 +170,10 @@ class SignInController extends GetxController {
         PrefUtils().saveString("eventToken", data['eventToken']);
         PrefUtils().saveString("eventId", data['_id']);
         PrefUtils().saveString("eventName", data['eventName']);
-        Get.offAllNamed(Routes.WELCOME1);
+        await DeviceController.to.getJoinedEvent();
+        SocketService.init();
+        unawaited(DeviceController.to.loadAllInfo());
+        Get.offAllNamed(Routes.EXPERIENCESELECTION2);
         CustomSnackbar.showSuccess("Login Successful");
       } else {
         Get.offAllNamed(Routes.JOINEVENT);

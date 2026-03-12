@@ -8,6 +8,8 @@ import 'package:selfiecam1/presentation/home/email_screen.dart';
 import 'package:selfiecam1/presentation/home/phone_screen.dart';
 import 'package:selfiecam1/presentation/home/preview_approve_screen.dart';
 import 'package:selfiecam1/presentation/home/send_it_to_screen.dart';
+import 'package:selfiecam1/presentation/home/settings_screen.dart';
+import 'package:selfiecam1/presentation/home/splash_screen.dart';
 import 'package:selfiecam1/presentation/home/welcome_2_screen.dart';
 import '../../presentation/auth/sign_in/admin_menu_scrren.dart';
 import '../../presentation/auth/sign_in/sign_in_screen.dart';
@@ -54,26 +56,26 @@ class Nav {
       page: () => const Welcome2Screen(),
       // binding: InitialBindings(),
     ),
-    GetPage(
-      name: Routes.EXPERIENCESELECTION1,
-      page: () => const ExperienceSelectionScreen1(),
-      // binding: InitialBindings(),
-    ),
+    // GetPage(
+    //   name: Routes.EXPERIENCESELECTION1,
+    //   page: () => const ExperienceSelectionScreen1(),
+    //   // binding: InitialBindings(),
+    // ),
     GetPage(
       name: Routes.EXPERIENCESELECTION2,
       page: () => const ExperienceSelectionScreen2(),
       // binding: InitialBindings(),
     ),
-    GetPage(
-      name: Routes.COUNTDOWN,
-      page: () => const CountdownScreen(),
-      // binding: InitialBindings(),
-    ),
-    GetPage(
-      name: Routes.PREVIEW,
-      page: () => const PreviewApproveScreen(),
-      // binding: InitialBindings(),
-    ),
+    // GetPage(
+    //   name: Routes.COUNTDOWN,
+    //   page: () => const CountdownScreen(),
+    //   // binding: InitialBindings(),
+    // ),
+    // GetPage(
+    //   name: Routes.PREVIEW,
+    //   page: () => const PreviewApproveScreen(),
+    //   // binding: InitialBindings(),
+    // ),
     GetPage(
       name: Routes.SENDITTOME,
       page: () => const SenItToMeScreen(),
@@ -92,6 +94,16 @@ class Nav {
     GetPage(
       name: Routes.PHONE,
       page: () => const Phone(),
+      // binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.SETTINGS,
+      page: () => const SettingsScreen(),
+      // binding: InitialBindings(),
+    ),
+    GetPage(
+      name: Routes.SPLASH,
+      page: () => const SplashScreen(),
       // binding: InitialBindings(),
     ),
   ];

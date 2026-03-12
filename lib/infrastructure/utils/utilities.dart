@@ -4,9 +4,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-
 import 'package:get/get.dart';
-
 import '../constants/app_colors.dart';
 import 'logger.dart';
 
@@ -93,6 +91,14 @@ class Utilities {
       // Handle errors (invalid format, etc.)
       Logger.log('Error parsing date: $e');
       return '';
+    }
+  }
+
+  static int updateLoop(String value) {
+    if (value == "infinite") {
+      return -1;
+    } else {
+      return int.parse(value);
     }
   }
 

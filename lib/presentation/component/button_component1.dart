@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:sizer/sizer.dart';
 
 // ------------------------------------------------------------------
@@ -67,13 +68,7 @@ class CustomIconButton extends StatelessWidget {
         columnChildren.add(SizedBox(height: _iconLabelSpacing));
       }
 
-      columnChildren.add(
-        Text(
-          label!.toUpperCase(),
-          style: _finalTextStyle,
-          textAlign: TextAlign.center,
-        ),
-      );
+      columnChildren.add(Text(label!.toUpperCase(), style: _finalTextStyle, textAlign: TextAlign.center));
     }
 
     return InkWell(
@@ -82,10 +77,7 @@ class CustomIconButton extends StatelessWidget {
         width: _containerWidth,
         height: _containerHeight,
         padding: EdgeInsets.all(_containerPadding),
-        decoration: BoxDecoration(
-          color: _color,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
+        decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(_borderRadius)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,6 +104,8 @@ class CustomIconButton1 extends StatelessWidget {
   final double? containerWidth;
   final double? containerHeight;
   final double? iconLabelSpacing;
+  final String? font;
+  final double? fontSize;
 
   const CustomIconButton1({
     super.key,
@@ -127,6 +121,8 @@ class CustomIconButton1 extends StatelessWidget {
     this.containerWidth,
     this.containerHeight,
     this.iconLabelSpacing,
+    this.font,
+    this.fontSize,
   });
 
   @override
@@ -141,11 +137,18 @@ class CustomIconButton1 extends StatelessWidget {
     final double _containerWidth = containerWidth ?? 18.w;
     final double _containerHeight = containerHeight ?? 20.h;
 
-    final TextStyle _defaultTextStyle = TextStyle(
-      fontFamily: 'Bebas',
-      fontSize: 18.sp,
+    // final TextStyle _defaultTextStyle = TextStyle(
+    //   fontFamily: 'Bebas',
+    //   fontSize: 18.sp,
+    //   fontWeight: FontWeight.w600,
+    //   color: iconColor ?? Colors.white,
+    // );
+    final TextStyle _defaultTextStyle = GoogleFonts.getFont(
+      font ?? 'Bebas Neue',
+      fontSize: fontSize?.sp ?? 18.sp,
+      height: font == 'Bebas Neue' ? null : 0.9,
       fontWeight: FontWeight.w600,
-      color: Colors.white,
+      color: iconColor ?? Colors.white,
     );
     final TextStyle _finalTextStyle = _defaultTextStyle.merge(textStyle);
 
@@ -155,19 +158,13 @@ class CustomIconButton1 extends StatelessWidget {
       SizedBox(
         height: _iconSize,
         width: _iconSize,
-        child: Image.asset(icon, fit: BoxFit.contain),
+        child: Image.asset(icon, fit: BoxFit.contain, color: iconColor),
       ),
     );
 
     if (label != null && label!.isNotEmpty) {
       columnChildren.add(SizedBox(height: _iconLabelSpacing));
-      columnChildren.add(
-        Text(
-          label!.toUpperCase(),
-          style: _finalTextStyle,
-          textAlign: TextAlign.center,
-        ),
-      );
+      columnChildren.add(Text(label!.toUpperCase(), style: _finalTextStyle, textAlign: TextAlign.center));
     }
 
     return InkWell(
@@ -176,10 +173,7 @@ class CustomIconButton1 extends StatelessWidget {
         width: _containerWidth,
         height: _containerHeight,
         padding: EdgeInsets.all(_containerPadding),
-        decoration: BoxDecoration(
-          color: _color,
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
+        decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(_borderRadius)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -216,37 +210,22 @@ class ApprovalButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 2.h),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(0.2.h),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0.2.h)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              iconAssetPath,
-              height: 6.h,
-              width: 6.h,
-              color: Colors.white,
-            ),
+            Image.asset(iconAssetPath, height: 6.h, width: 6.h, color: Colors.white),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 2.w),
               child: SizedBox(
                 height: 6.h,
-                child: const VerticalDivider(
-                  color: Colors.white,
-                  thickness: 1,
-                ),
+                child: const VerticalDivider(color: Colors.white, thickness: 1),
               ),
             ),
             Text(
               text,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Inter',
-              ),
+              style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
             ),
           ],
         ),
@@ -287,10 +266,10 @@ class CustomUtilityButton extends StatelessWidget {
     final String _text = text ?? 'BUTTON';
     final Color _color = color ?? const Color(0xFF00B09B);
     final VoidCallback? _onPressed = onPressed;
-    final double _height = height ?? 8.h;
+    final double _height = height ?? 10.h;
     final double _borderRadius = borderRadius ?? 2.w;
     final double _horizontalPadding = horizontalPadding ?? 4.w;
-    final double _horizontalMargin = horizontalMargin ?? 2.w;
+    final double _horizontalMargin = horizontalMargin ?? 0.5.w;
     final int _flex = flex ?? 1;
 
     final TextStyle _defaultTextStyle = TextStyle(
@@ -311,16 +290,10 @@ class CustomUtilityButton extends StatelessWidget {
             backgroundColor: _color,
             minimumSize: Size.fromHeight(_height),
             padding: EdgeInsets.symmetric(horizontal: _horizontalPadding),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(_borderRadius),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_borderRadius)),
             elevation: 0,
           ),
-          child: Text(
-            _text.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: _finalTextStyle,
-          ),
+          child: Text(_text.toUpperCase(), textAlign: TextAlign.center, style: _finalTextStyle),
         ),
       ),
     );
