@@ -31,6 +31,7 @@ class _Welcome1ScreenState extends State<Welcome1Screen> {
     unawaited(deviceController.loadAllInfo());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       deviceController.getJoinedEvent();
+      deviceController.getSettingsDisclaimers();
     });
     super.initState();
   }

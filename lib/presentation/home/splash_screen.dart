@@ -3,9 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/data/services/credentials.dart';
+import 'package:selfiecam1/data/services/internet_service.dart';
+import 'package:selfiecam1/data/services/internet_service_adapter.dart';
 import 'package:selfiecam1/data/services/socket_service.dart';
+import 'package:selfiecam1/data/services/upload_queue_service.dart';
+import 'package:selfiecam1/data/services/upload_repository.dart';
 import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
+import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
 import 'package:sizer/sizer.dart';
 
@@ -32,6 +38,7 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
+  final connected = Get.find<InternetService>().isConnected;
   @override
   void initState() {
     super.initState();
@@ -39,12 +46,39 @@ class _SplashScreenState extends State<SplashScreen> {
       if (PrefUtils().getString("eventJoined") == "true") {
         SocketService.init();
         unawaited(deviceController.loadAllInfo());
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          deviceController.getJoinedEvent();
+
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          deviceController.loadLocalData();
+          final connected = Get.find<InternetService>().isConnected;
+          Logger.log("Internet connection status: $connected");
+          if (connected.value == true) {
+            await deviceController.getJoinedEvent();
+            await deviceController.getSettingsDisclaimers();
+          }
+          await Get.putAsync(() async {
+            final service = UploadQueueService(
+              repository: UploadRepository(),
+              connectivity: InternetServiceAdapter(Get.find<InternetService>()),
+              credentials: MyCredentialsProvider(),
+            );
+            await service.init();
+            return service;
+          }, permanent: true);
+          if (deviceController.branding.value!.homeVideo != null && deviceController.branding.value!.homeVideo!.isNotEmpty) {
+            await deviceController.initVideoPreviewForOverlay(deviceController.branding.value!.homeVideo!);
+          }
+          if (deviceController.branding.value!.homeNoActivityVideo != null &&
+              deviceController.branding.value!.homeNoActivityVideo!.isNotEmpty) {
+            await deviceController.initVideoPreviewForActivity(deviceController.branding.value!.homeNoActivityVideo!);
+          }
+          Timer(const Duration(seconds: 3), () {
+            Get.offAllNamed(Routes.EXPERIENCESELECTION2);
+            // Get.to(() => LeadCaptureScreen());
+          });
         });
-        Timer(const Duration(seconds: 3), () {
-          Get.offAllNamed(Routes.EXPERIENCESELECTION2);
-        });
+        // Timer(const Duration(seconds: 3), () {
+        //   Get.offAllNamed(Routes.EXPERIENCESELECTION2);
+        // });
       } else {
         Timer(const Duration(seconds: 3), () {
           Get.offAllNamed(Routes.JOINEVENT);
@@ -62,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    // final textTheme = Theme.of(context).textTheme;
 
     return GestureDetector(
       onTap: () {

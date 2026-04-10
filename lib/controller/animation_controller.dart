@@ -137,10 +137,11 @@ class AnimationControllerX extends GetxController with GetTickerProviderStateMix
       await CameraControllerX.to.recordBoomerang();
     }
     if (type.value == 'Shoutout') {
-      await CameraControllerX.to.recordShoutout(seconds: DeviceController.to.experiences.value!.shoutout.timeLimit);
+      await CameraControllerX.to.recordShoutout(type.value, seconds: DeviceController.to.experiences.value!.shoutout.timeLimit);
+      return;
     }
     if (type.value == 'Slomo') {
-      await CameraControllerX.to.recordSlomo();
+      await CameraControllerX.to.recordSlomo(speed: DeviceController.to.experiences.value!.slowMotion.slowMotionSpeed);
     }
     if (type.value == 'Gif') {
       await CameraControllerX.to.recordGif();

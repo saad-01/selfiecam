@@ -1,12 +1,15 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:get/get.dart';
 import 'package:selfiecam1/controller/cam_controller.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/infrastructure/utils/custom_snackbar.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/signup_webview.dart';
 import 'package:sizer/sizer.dart';
+import 'package:video_player/video_player.dart';
 import '../../infrastructure/constants/app_assets.dart';
 import '../../infrastructure/navigation/routes.dart';
 import '../component/button_component1.dart';
@@ -24,7 +27,16 @@ class _ExperienceSelectionScreen2State extends State<ExperienceSelectionScreen2>
 
   @override
   void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (deviceController.branding.value?.homeNoActivityVideo != null &&
+          deviceController.branding.value!.homeNoActivityVideo!.isNotEmpty) {
+        deviceController.isIdle.value = false;
+        deviceController.startIdleTimer();
+      }
+    });
+
     // unawaited(deviceController.loadAllInfo());
+
     super.initState();
   }
 
@@ -32,201 +44,199 @@ class _ExperienceSelectionScreen2State extends State<ExperienceSelectionScreen2>
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Obx(
-      () => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            Obx(() {
-              if (!camController.isReady.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent, // catches taps on transparent areas
+      onTap: () => deviceController.resetIdleTimer(),
+      onPanDown: (_) => deviceController.resetIdleTimer(),
+      child: Obx(
+        () => Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              Obx(() {
+                if (!camController.isReady.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              return
-              // cameraWidget(context);
-              CameraPreview(camController.cameraController);
-            }),
+                return
+                // cameraWidget(context);
+                CameraPreview(camController.cameraController);
+              }),
+              if (deviceController.branding.value?.homeScreenMode == 'none')
+                Positioned.fill(child: Image.asset(AppAssets.demoOverlay, fit: BoxFit.fill)),
+              if (deviceController.branding.value?.homeScreenMode == 'image' &&
+                  deviceController.branding.value!.homeImage!.isNotEmpty)
+                Image.asset(deviceController.branding.value?.homeImage ?? '', fit: BoxFit.fill),
+              if (deviceController.branding.value?.homeScreenMode == 'video' &&
+                  deviceController.branding.value!.homeVideo!.isNotEmpty)
+                Obx(() {
+                  if (!deviceController.isVideoInitializedOverlay.value ||
+                      deviceController.videoControllerForOverlay.value == null) {
+                    return const SizedBox();
+                  }
 
-            if (deviceController.branding.value?.homeOverlay == null || deviceController.branding.value!.homeOverlay!.isEmpty)
-              Positioned.fill(child: Image.asset(AppAssets.demoOverlay, fit: BoxFit.fill)),
-            if (deviceController.branding.value?.homeOverlay != null && deviceController.branding.value!.homeOverlay!.isNotEmpty)
-              CachedNetworkImage(
-                imageUrl: deviceController.branding.value?.homeOverlay ?? '',
-                fit: BoxFit.fill,
-                errorWidget: (context, url, error) => const SizedBox.shrink(),
-              ),
-            Positioned(
-              top: 20,
-              left: 20,
-              child: InkWell(
-                onTap: () {
-                  Get.toNamed(Routes.AUTHMENU);
-                },
-                child: SvgPicture.asset(AppAssets.alignLeft, width: 3.h, height: 3.h),
-              ),
-            ), // Gap(3.h),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  'SELECT YOUR EXPERIENCE',
-                  style: textTheme.displayLarge!.copyWith(
-                    fontSize: 25.sp,
-                    color: deviceController.branding.value?.fontColor != null
-                        ? Color(int.parse('0xff${deviceController.branding.value!.fontColor.substring(1)}'))
-                        : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(offset: Offset(0, 1), blurRadius: 6, color: Colors.black.withOpacity(0.6)),
-                      Shadow(offset: Offset(0, 2), blurRadius: 12, color: Colors.black.withOpacity(0.4)),
+                  return Positioned.fill(
+                    child: FittedBox(
+                      fit: BoxFit.cover,
+                      child: SizedBox(
+                        width: deviceController.videoControllerForOverlay.value!.value.size.width,
+                        height: deviceController.videoControllerForOverlay.value!.value.size.height,
+                        child: VideoPlayer(deviceController.videoControllerForOverlay.value!),
+                      ),
+                    ),
+                  );
+                }),
+              // Positioned.fill(child: Image.asset(AppAssets.demoOverlay, fit: BoxFit.fill)),
+              Positioned(
+                top: 20,
+                left: 20,
+                child: InkWell(
+                  onTap: () {
+                    Get.toNamed(Routes.AUTHMENU);
+                  },
+                  child: SvgPicture.asset(AppAssets.alignLeft, width: 3.h, height: 3.h),
+                ),
+              ), // Gap(3.h),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    'SELECT YOUR EXPERIENCE',
+                    style: textTheme.displayLarge!.copyWith(
+                      fontSize: 25.sp,
+                      color: deviceController.branding.value?.fontColor != null
+                          ? Color(int.parse('0xff${deviceController.branding.value!.fontColor.substring(1)}'))
+                          : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(offset: Offset(0, 1), blurRadius: 6, color: Colors.black.withOpacity(0.6)),
+                        Shadow(offset: Offset(0, 2), blurRadius: 12, color: Colors.black.withOpacity(0.4)),
+                      ],
+                    ),
+                  ),
+                  Gap(3.h),
+                  experiencesGrid(),
+                  Gap(5.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    // spacing: 5,
+                    children: [
+                      if (deviceController.settings.value?.explicitDisclaimerEnabled == true)
+                        Transform.scale(
+                          scale: 1.5,
+                          child: Checkbox(
+                            value: deviceController.disclaimerAccepted.value,
+                            onChanged: (value) {
+                              deviceController.disclaimerAccepted.value = value ?? false;
+                            },
+                            checkColor: Colors.white,
+                            fillColor: MaterialStateProperty.resolveWith<Color>((states) {
+                              if (states.contains(MaterialState.selected)) {
+                                return Colors.blue; // checked color
+                              }
+                              return Colors.grey; // unchecked filled color
+                            }),
+                          ),
+                        ),
+                      RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          children: [
+                            const TextSpan(text: 'By using this application you agree to our '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Get.to(
+                                    () => SignupWebview(
+                                      url:
+                                          deviceController.settings.value?.privacyPolicyUrl ??
+                                          'https://www.selfiecam.com/privacy',
+                                    ),
+                                  );
+                                },
+                            ),
+                            const TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'Terms of Use',
+                              style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  // Handle Terms click
+                                  // Get.toNamed('/terms');
+                                  Get.to(
+                                    () => SignupWebview(
+                                      url: deviceController.settings.value?.termsUrl ?? 'https://www.selfiecam.com/terms',
+                                    ),
+                                  );
+                                },
+                            ),
+                            const TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                Gap(3.h),
-                // GridView.builder(gridDelegate: gridDelegate, itemBuilder: , itemCount: 6, shrinkWrap: true),
-                experiencesGrid(),
 
-                // Padding(
-                //   padding: EdgeInsets.symmetric(horizontal: 22.0.w),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //     // spacing: 1.w,
-                //     children: [
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.selfie,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         iconSize: 6.h,
-                //         label: 'Photo',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           Get.toNamed(Routes.COUNTDOWN);
-                //         },
-                //       ),
+                  Gap(2.h),
+                ],
+              ),
+              (!deviceController.isIdle.value)
+                  ? const SizedBox.shrink()
+                  : GestureDetector(
+                      onTap: () => deviceController.resetIdleTimer(),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Full-screen idle video
+                          if (deviceController.isVideoInitializedActivity.value &&
+                              deviceController.videoControllerForActivity.value != null)
+                            FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: deviceController.videoControllerForActivity.value!.value.size.width,
+                                height: deviceController.videoControllerForActivity.value!.value.size.height,
+                                child: VideoPlayer(deviceController.videoControllerForActivity.value!),
+                              ),
+                            ),
 
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.boomerang,
-                //         iconSize: 6.h,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         label: 'Boomerang',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           // Get.toNamed(Routes.WELCOME2);
-                //         },
-                //       ),
+                          // Fallback dark background if video not ready
+                          if (!deviceController.isVideoInitializedActivity.value) Container(color: Colors.black),
 
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.gif,
-                //         iconSize: 6.h,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         label: 'GIF',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           // Get.toNamed(Routes.WELCOME2);
-                //         },
-                //       ),
-                //     ],
-                //   ),
-                // ),
-                // Gap(1.h),
-                // Padding(
-                //   padding: EdgeInsets.symmetric(horizontal: 22.0.w),
-                //   child: Row(
-                //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //     // spacing: 1.w,
-                //     children: [
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.shoutout,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         iconSize: 6.h,
-                //         label: 'Shoutout',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           // Get.toNamed(Routes.WELCOME2);
-                //         },
-                //       ),
-
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.slowmo,
-                //         iconSize: 6.h,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         label: 'Slowmo',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           // Get.toNamed(Routes.WELCOME2);
-                //         },
-                //       ),
-                //       CustomIconButton1(
-                //         containerHeight: 18.h,
-                //         containerWidth: 18.w,
-                //         borderRadius: deviceController.branding.value?.buttonStyle == 'rounded' ? 10 : 0.0,
-                //         color: deviceController.branding.value?.buttonColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonColor.substring(1)}'))
-                //             : const Color(0xff500F86),
-                //         icon: AppAssets.aiPhoto,
-                //         iconSize: 6.h,
-                //         font: deviceController.branding.value?.fontFamily,
-                //         fontSize: deviceController.branding.value?.fontSize,
-                //         label: 'AI Photo',
-                //         iconColor: deviceController.branding.value?.buttonTextColor != null
-                //             ? Color(int.parse('0xff${deviceController.branding.value!.buttonTextColor.substring(1)}'))
-                //             : Colors.white,
-                //         onPressed: () {
-                //           // Get.toNamed(Routes.WELCOME2);
-                //         },
-                //       ),
-                //     ],
-                //   ),
-                // ),
-                Gap(10.h),
-              ],
-            ),
-          ],
+                          // "Tap anywhere to start" label
+                          Align(
+                            alignment: Alignment.bottomCenter,
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 60),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.45),
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Text(
+                                  'TAP ANYWHERE TO START',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.sp,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.5,
+                                    shadows: [
+                                      Shadow(offset: const Offset(0, 1), blurRadius: 6, color: Colors.black.withOpacity(0.6)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ],
+          ),
         ),
       ),
     );
@@ -276,7 +286,15 @@ class _ExperienceSelectionScreen2State extends State<ExperienceSelectionScreen2>
               iconColor: branding?.buttonTextColor != null
                   ? Color(int.parse('0xff${branding!.buttonTextColor.substring(1)}'))
                   : Colors.white,
-              onPressed: item.onTap,
+              onPressed: deviceController.settings.value?.explicitDisclaimerEnabled == true
+                  ? () {
+                      if (deviceController.disclaimerAccepted.value) {
+                        item.onTap();
+                      } else {
+                        CustomSnackbar.showInfo("Please accept the disclaimer to proceed.");
+                      }
+                    }
+                  : item.onTap,
             );
           },
         ),

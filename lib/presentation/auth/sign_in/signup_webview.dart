@@ -4,7 +4,8 @@ import 'package:selfiecam1/infrastructure/utils/loader.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class SignupWebview extends StatelessWidget {
-  SignupWebview({super.key});
+  final String url;
+  SignupWebview({super.key, required this.url});
   final RxBool isLoading = true.obs;
   final LoaderService loader = Get.find<LoaderService>();
 
@@ -38,7 +39,7 @@ class SignupWebview extends StatelessWidget {
         },
       ),
     )
-    ..loadRequest(Uri.parse("https://hub.selfiecam.ai/auth/register"));
+    ..loadRequest(Uri.parse(url));
 
   @override
   Widget build(BuildContext context) {

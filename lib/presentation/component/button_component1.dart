@@ -95,6 +95,7 @@ class CustomIconButton1 extends StatelessWidget {
   final String icon;
   final String? label;
   final VoidCallback? onPressed;
+  final VoidCallback? onPressedSecond;
   final Color? color;
   final double? iconSize;
   final Color? iconColor;
@@ -123,6 +124,7 @@ class CustomIconButton1 extends StatelessWidget {
     this.iconLabelSpacing,
     this.font,
     this.fontSize,
+    this.onPressedSecond,
   });
 
   @override
@@ -192,6 +194,7 @@ class ApprovalButton extends StatelessWidget {
   final Color color;
   final String iconAssetPath;
   final VoidCallback onPressed;
+  final double? fontSize;
 
   const ApprovalButton({
     super.key,
@@ -199,6 +202,7 @@ class ApprovalButton extends StatelessWidget {
     required this.color,
     required this.iconAssetPath,
     required this.onPressed,
+    this.fontSize,
   });
 
   @override
@@ -215,7 +219,7 @@ class ApprovalButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(iconAssetPath, height: 6.h, width: 6.h, color: Colors.white),
+            Image.asset(iconAssetPath, height: 5.h, width: 5.h, color: Colors.white),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 2.w),
               child: SizedBox(
@@ -225,7 +229,12 @@ class ApprovalButton extends StatelessWidget {
             ),
             Text(
               text,
-              style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold, fontFamily: 'Inter'),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: fontSize ?? 18.sp,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Inter',
+              ),
             ),
           ],
         ),

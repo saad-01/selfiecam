@@ -3,17 +3,17 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_new/ffmpeg_session.dart';
 import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:selfiecam1/controller/device_controller.dart';
 import 'package:selfiecam1/infrastructure/utils/logger.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 class VideoUtils {
   /// Remove audio
@@ -21,7 +21,24 @@ class VideoUtils {
     final dir = await getTemporaryDirectory();
     final outputPath = p.join(dir.path, 'no_audio_${DateTime.now().millisecondsSinceEpoch}.mp4');
 
-    final command = '-i "$inputPath" -c copy -an "$outputPath"';
+    final command = '-y -i "$inputPath" -map 0:v -c:v copy -an "$outputPath"';
+
+    await _execute(command);
+    return outputPath;
+  }
+
+  static Future<String> changeVideoSpeed(
+    String inputPath, {
+    double speed = 1.0, // 0.5 = slow, 2.0 = fast
+  }) async {
+    final dir = await getTemporaryDirectory();
+    final outputPath = p.join(dir.path, 'speed_${speed}_${DateTime.now().millisecondsSinceEpoch}.mp4');
+
+    // setpts = adjusts video playback speed
+    // formula: new_pts = old_pts / speed
+    final ptsFactor = (1 / speed);
+
+    final command = '-y -i "$inputPath" -filter:v "setpts=$ptsFactor*PTS" -an "$outputPath"';
 
     await _execute(command);
     return outputPath;
@@ -53,31 +70,32 @@ class VideoUtils {
     String command;
 
     // Infinite loop (use only for preview)
-    command = '-i "$forwardPath" -i "$backwardPath" -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0" -an "$outputPath"';
+    command =
+        '-y -i "$forwardPath" -i "$backwardPath" -filter_complex "[0:v][1:v]concat=n=2:v=1:a=0" -map "[v]" -c:v libx264 -preset fast -crf 18 -pix_fmt yuv420p -movflags +faststart -an "$outputPath"';
 
     await _execute(command);
     return outputPath;
   }
 
-  /// Generate PingPong Effect
-  static Future<String> generatePingpongVideo(String forwardPath, String backwardPath) async {
-    final dir = await getTemporaryDirectory();
-    final outputPath = p.join(dir.path, 'pingpong_${DateTime.now().millisecondsSinceEpoch}.mp4');
+  // /// Generate PingPong Effect
+  // static Future<String> generatePingpongVideo(String forwardPath, String backwardPath) async {
+  //   final dir = await getTemporaryDirectory();
+  //   final outputPath = p.join(dir.path, 'pingpong_${DateTime.now().millisecondsSinceEpoch}.mp4');
 
-    final command =
-        '-i "$forwardPath" -i "$backwardPath" '
-        '-filter_complex "'
-        '[0:v]copy[forward_full];'
-        '[1:v]trim=start=0:duration=0.3[backward_start];'
-        '[0:v]reverse,trim=start=0:duration=0.3,reverse[forward_end];'
-        '[1:v]copy[backward_full];'
-        '[forward_full][backward_start][forward_end][backward_full]'
-        'concat=n=4:v=1:a=0" '
-        '-an "$outputPath"';
+  //   final command =
+  //       '-i "$forwardPath" -i "$backwardPath" '
+  //       '-filter_complex "'
+  //       '[0:v]copy[forward_full];'
+  //       '[1:v]trim=start=0:duration=0.3[backward_start];'
+  //       '[0:v]reverse,trim=start=0:duration=0.3,reverse[forward_end];'
+  //       '[1:v]copy[backward_full];'
+  //       '[forward_full][backward_start][forward_end][backward_full]'
+  //       'concat=n=4:v=1:a=0" '
+  //       '-an "$outputPath"';
 
-    await _execute(command);
-    return outputPath;
-  }
+  //   await _execute(command);
+  //   return outputPath;
+  // }
 
   /// Apply Overlay PNG on Video
   static Future<String> applyOverlay(String inputPath, String overlayPath) async {
@@ -85,9 +103,13 @@ class VideoUtils {
     final outputPath = p.join(dir.path, 'overlay_${DateTime.now().millisecondsSinceEpoch}.mp4');
 
     final command =
-        '-i "$inputPath" -i "$overlayPath" '
-        '-filter_complex "[1:v][0:v]scale=w=rw:h=rh[ov];[0:v][ov]overlay=0:0" '
+        '-y -i "$inputPath" -i "$overlayPath" '
+        '-filter_complex "[1:v]scale=main_w:main_h[ov];[0:v][ov]overlay=0:0[v]" '
+        '-map "[v]" '
+        '-map 0:a? '
         '-c:v libx264 -preset ultrafast -crf 23 '
+        '-pix_fmt yuv420p '
+        '-movflags +faststart '
         '-pix_fmt yuv420p "$outputPath"';
 
     await _execute(command);
@@ -101,7 +123,8 @@ class VideoUtils {
 
     if (returnCode == null || !ReturnCode.isSuccess(returnCode)) {
       final logs = await session.getAllLogsAsString();
-      throw Exception('FFmpeg failed: $logs');
+      throw Sentry.addBreadcrumb(Breadcrumb(message: 'FFmpeg failed: $logs'));
+      // throw Exception('FFmpeg failed: $logs');
     }
   }
 
@@ -118,32 +141,119 @@ class VideoUtils {
     return overlayPath;
   }
 
+  static Future<String> waitForVideoReady(String rawPath) async {
+    // If already a proper mp4 path, just wait for it to exist
+    String resolvedPath = rawPath;
+
+    // Keep checking until the file is no longer a .temp file
+    for (int i = 0; i < 30; i++) {
+      final file = File(resolvedPath);
+
+      // Check if a finalized version exists alongside the .temp
+      if (resolvedPath.endsWith('.temp')) {
+        final mp4Path = resolvedPath.replaceAll('.temp', '.mp4');
+        if (await File(mp4Path).exists()) {
+          resolvedPath = mp4Path;
+          break;
+        }
+      }
+
+      if (await file.exists() && !resolvedPath.endsWith('.temp')) {
+        // Also wait for file size to stabilize (file is done writing)
+        final size1 = await file.length();
+        await Future.delayed(const Duration(milliseconds: 300));
+        final size2 = await file.length();
+        if (size1 == size2 && size1 > 0) break;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    final finalFile = File(resolvedPath);
+    if (!await finalFile.exists() || resolvedPath.endsWith('.temp')) {
+      throw Exception('Video file never finalized: $resolvedPath');
+    }
+
+    return resolvedPath;
+  }
+
   static Future<String> applyOverlayFromImagePackage({required String videoPath, required img.Image overlayImage}) async {
     final videoFile = File(videoPath);
-
     if (!await videoFile.exists()) {
       throw Exception('Video file not found');
     }
 
-    /// Convert image.Image → PNG file
     final overlayPath = await _imagePackageToFile(overlayImage);
-
     final dir = await getTemporaryDirectory();
-    final outputPath = '${dir.path}/final_${DateTime.now().millisecondsSinceEpoch}.mp4';
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final normalizedPath = '${dir.path}/normalized_$ts.mp4';
+    final outputPath = '${dir.path}/final_$ts.mp4';
 
-    final command =
-        '-i "$videoPath" '
-        '-i "$overlayPath" '
-        '-filter_complex "[0:v][1:v]overlay=0:0" '
-        '-c:v libx264 '
-        '-c:a copy ' // <-- preserve original audio
-        '-preset ultrafast '
-        '-crf 23 '
-        '-pix_fmt yuv420p '
-        '-movflags +faststart '
-        '"$outputPath"';
+    // ─── Pass 1: Strip rotation metadata + normalize dimensions ───────────────
+    final normalizeCmd = [
+      '-i',
+      videoPath,
+      '-vf',
+      'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+      '-c:v',
+      'libx264',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-preset',
+      'ultrafast',
+      '-crf',
+      '18',
+      '-pix_fmt',
+      'yuv420p',
+      '-movflags',
+      '+faststart',
+      '-map_metadata',
+      '-1',
+      normalizedPath,
+    ].join(' ');
 
-    await _execute(command);
+    await _execute(normalizeCmd);
+
+    // ─── Pass 2: Apply overlay on clean normalized video ──────────────────────
+    final overlayCmd = [
+      '-i',
+      normalizedPath,
+      '-i',
+      overlayPath,
+      '-filter_complex',
+      '[1:v][0:v]scale2ref[ov][base];[base][ov]overlay=0:0[v]',
+      '-map',
+      '[v]',
+      '-map',
+      '0:a?',
+      '-c:v',
+      'libx264',
+      '-c:a',
+      'aac',
+      '-b:a',
+      '128k',
+      '-preset',
+      'ultrafast',
+      '-crf',
+      '23',
+      '-pix_fmt',
+      'yuv420p',
+      '-movflags',
+      '+faststart',
+      outputPath,
+    ].join(' ');
+
+    await _execute(overlayCmd);
+
+    // ─── Cleanup ──────────────────────────────────────────────────────────────
+    try {
+      await File(normalizedPath).delete();
+    } catch (_) {}
+    try {
+      await File(overlayPath).delete();
+    } catch (_) {}
 
     return outputPath;
   }
@@ -206,56 +316,56 @@ class VideoUtils {
   /// [onProgress]  - Optional callback receiving progress (0.0 – 1.0).
   ///
   /// Returns the output file path on success, or throws an exception on failure.
-  static Future<String> generateReverseVideo({required String inputPath, void Function(double progress)? onProgress}) async {
-    // ── 1. Prepare output path ──────────────────────────────────────────────────
-    final Directory tempDir = await getTemporaryDirectory();
-    final String fileName = 'reversed_${DateTime.now().millisecondsSinceEpoch}${path.extension(inputPath)}';
-    final String outputPath = path.join(tempDir.path, fileName);
+  // static Future<String> generateReverseVideo({required String inputPath, void Function(double progress)? onProgress}) async {
+  //   // ── 1. Prepare output path ──────────────────────────────────────────────────
+  //   final Directory tempDir = await getTemporaryDirectory();
+  //   final String fileName = 'reversed_${DateTime.now().millisecondsSinceEpoch}${path.extension(inputPath)}';
+  //   final String outputPath = path.join(tempDir.path, fileName);
 
-    // ── 2. Build FFmpeg command ─────────────────────────────────────────────────
-    //   -vf reverse   → reverses video frames
-    //   -af areverse  → reverses audio stream
-    //   -c:v libx264  → re-encodes with H.264 (change to 'copy' to skip re-encode
-    //                   but 'reverse' filter always requires re-encoding)
-    //   -preset fast  → good balance of speed vs. file size
-    //   -crf 18       → near-lossless quality (lower = better, 18–23 is ideal)
-    final String command = '-i "$inputPath" -vf reverse -af areverse -c:v libx264 -preset fast -crf 18 "$outputPath"';
+  //   // ── 2. Build FFmpeg command ─────────────────────────────────────────────────
+  //   //   -vf reverse   → reverses video frames
+  //   //   -af areverse  → reverses audio stream
+  //   //   -c:v libx264  → re-encodes with H.264 (change to 'copy' to skip re-encode
+  //   //                   but 'reverse' filter always requires re-encoding)
+  //   //   -preset fast  → good balance of speed vs. file size
+  //   //   -crf 18       → near-lossless quality (lower = better, 18–23 is ideal)
+  //   final String command = '-i "$inputPath" -vf reverse -af areverse -c:v libx264 -preset fast -crf 18 "$outputPath"';
 
-    // ── 3. Execute & track progress ─────────────────────────────────────────────
-    final FFmpegSession session = await FFmpegKit.executeAsync(
-      command,
-      (session) async {
-        // Completion callback — no action needed here; handled below.
-      },
-      (log) {
-        // Log callback: parse duration/time for progress estimation
-        if (onProgress != null) {
-          final String message = log.getMessage();
-          final double? progress = _parseProgress(message);
-          if (progress != null) onProgress(progress);
-        }
-      },
-    );
+  //   // ── 3. Execute & track progress ─────────────────────────────────────────────
+  //   final FFmpegSession session = await FFmpegKit.executeAsync(
+  //     command,
+  //     (session) async {
+  //       // Completion callback — no action needed here; handled below.
+  //     },
+  //     (log) {
+  //       // Log callback: parse duration/time for progress estimation
+  //       if (onProgress != null) {
+  //         final String message = log.getMessage();
+  //         final double? progress = _parseProgress(message);
+  //         if (progress != null) onProgress(progress);
+  //       }
+  //     },
+  //   );
 
-    // ── 4. Check result ─────────────────────────────────────────────────────────
-    final returnCode = await session.getReturnCode();
+  //   // ── 4. Check result ─────────────────────────────────────────────────────────
+  //   final returnCode = await session.getReturnCode();
 
-    if (ReturnCode.isSuccess(returnCode)) {
-      return outputPath;
-    } else {
-      final logs = await session.getLogsAsString();
-      throw Exception('FFmpeg failed to reverse video.\n\nLogs:\n$logs');
-    }
-  }
+  //   if (ReturnCode.isSuccess(returnCode)) {
+  //     return outputPath;
+  //   } else {
+  //     final logs = await session.getLogsAsString();
+  //     throw Exception('FFmpeg failed to reverse video.\n\nLogs:\n$logs');
+  //   }
+  // }
 
-  // ── Helper: crude progress parser from FFmpeg stderr ──────────────────────────
-  static double? _parseProgress(String log) {
-    // FFmpeg emits lines like: "frame=  120 fps= 60 ... time=00:00:04.00 ..."
-    // We extract 'time' and compare against a known duration if available.
-    // For simplicity, we just return null here and let callers use a spinner.
-    // Replace with a proper duration-aware parser if needed.
-    return null;
-  }
+  // // ── Helper: crude progress parser from FFmpeg stderr ──────────────────────────
+  // static double? _parseProgress(String log) {
+  //   // FFmpeg emits lines like: "frame=  120 fps= 60 ... time=00:00:04.00 ..."
+  //   // We extract 'time' and compare against a known duration if available.
+  //   // For simplicity, we just return null here and let callers use a spinner.
+  //   // Replace with a proper duration-aware parser if needed.
+  //   return null;
+  // }
 
   static Future<String?> generateBoomerang(String inputPath) async {
     final dir = await getTemporaryDirectory();
@@ -273,6 +383,11 @@ class VideoUtils {
   -i "$inputPath"
   -vf "reverse,setpts=0.667*PTS"
   -af "areverse,atempo=1.2"
+  -c:v libx264
+-preset fast
+-crf 18
+-pix_fmt yuv420p
+-movflags +faststart
   -y "$reversedPath"
 '''
             .trim()
@@ -291,9 +406,14 @@ class VideoUtils {
     final speedCmd =
         '''
   -i "$inputPath"
-  -vf "setpts=0.667*PTS"
-  -af "atempo=1.2"
-  -y "$speedupPath"
+-vf "setpts=0.667*PTS"
+-af "atempo=1.2"
+-c:v libx264
+-preset fast
+-crf 18
+-pix_fmt yuv420p
+-movflags +faststart
+-y "$speedupPath"
 '''
             .trim()
             .replaceAll('\n', ' ');
@@ -315,11 +435,12 @@ class VideoUtils {
     // Step 4: Concatenate into final boomerang
     final concatCmd =
         '''
-    -f concat
-    -safe 0
-    -i "${concatFile.path}"
-    -c copy
-    -y "$outputPath"
+  -f concat
+-safe 0
+-i "${concatFile.path}"
+-c copy
+-movflags +faststart
+-y "$outputPath"
   '''
             .trim()
             .replaceAll('\n', ' ');
@@ -353,40 +474,35 @@ class VideoUtils {
   static Future<String?> attachBackgroundAudio({required String videoPath, required String audioUrl}) async {
     final dir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final outputPath = '${dir.path}/with_audio_$timestamp.mp4';
 
-    final downloadedAudioPath = '${dir.path}/bg_audio_$timestamp.mp3';
+    // Get exact video duration
+    final probeSession = await FFprobeKit.execute(
+      '-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$videoPath"',
+    );
+    final probeOutput = await probeSession.getOutput();
+    final videoDuration = double.tryParse(probeOutput?.trim() ?? '') ?? 0.0;
 
-    try {
-      final response = await http.get(Uri.parse(audioUrl));
-      if (response.statusCode != 200) return null;
-
-      await File(downloadedAudioPath).writeAsBytes(response.bodyBytes);
-    } catch (e) {
+    if (videoDuration <= 0) {
+      debugPrint('[AudioAttach] ❌ Could not probe video duration');
       return null;
     }
 
-    final outputPath = '${dir.path}/with_audio_$timestamp.mp4';
-
-    final ffmpegCmd =
-        '''
-  -i "$videoPath"
-  -stream_loop -1 -i "$downloadedAudioPath"
-  -map 0:v:0
-  -map 1:a:0
-  -c:v copy
-  -c:a aac
-  -b:a 192k
-  -shortest
-  -movflags +faststart
-  -y "$outputPath"
-  '''
-            .trim()
-            .replaceAll(RegExp(r'\s+'), ' ');
+    final ffmpegCmd = [
+      '-i "$videoPath"',
+      '-stream_loop -1 -i "$audioUrl"', // loop audio infinitely
+      '-map 0:v:0',
+      '-map 1:a:0',
+      '-c:v copy',
+      '-c:a aac',
+      '-b:a 192k',
+      '-t $videoDuration', // always cap at exact video length
+      '-movflags +faststart',
+      '-y "$outputPath"',
+    ].join(' ');
 
     final session = await FFmpegKit.execute(ffmpegCmd);
     final returnCode = await session.getReturnCode();
-
-    await File(downloadedAudioPath).delete();
 
     if (ReturnCode.isSuccess(returnCode)) {
       return outputPath;
@@ -394,7 +510,6 @@ class VideoUtils {
 
     final logs = await session.getAllLogsAsString();
     debugPrint('[AudioAttach] ❌ FFmpeg failed: $logs');
-
     return null;
   }
 
@@ -403,21 +518,22 @@ class VideoUtils {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
     // Step 1: Download the remote video
-    final remoteVideoPath = '${dir.path}/remote_video_$timestamp.mp4';
+    // final remoteVideoPath = '${dir.path}/remote_video_$timestamp.mp4';
+    final remoteVideoPath = remoteVideoUrl;
 
     debugPrint('[Concat] Downloading remote video from $remoteVideoUrl');
-    try {
-      final response = await http.get(Uri.parse(remoteVideoUrl));
-      if (response.statusCode != 200) {
-        debugPrint('[Concat] Failed to download remote video: ${response.statusCode}');
-        return null;
-      }
-      await File(remoteVideoPath).writeAsBytes(response.bodyBytes);
-      debugPrint('[Concat] Remote video downloaded to $remoteVideoPath');
-    } catch (e) {
-      debugPrint('[Concat] Download exception: $e');
-      return null;
-    }
+    // try {
+    //   final response = await http.get(Uri.parse(remoteVideoUrl));
+    //   if (response.statusCode != 200) {
+    //     debugPrint('[Concat] Failed to download remote video: ${response.statusCode}');
+    //     return null;
+    //   }
+    //   await File(remoteVideoPath).writeAsBytes(response.bodyBytes);
+    //   debugPrint('[Concat] Remote video downloaded to $remoteVideoPath');
+    // } catch (e) {
+    //   debugPrint('[Concat] Download exception: $e');
+    //   return null;
+    // }
 
     final outputPath = '${dir.path}/concatenated_$timestamp.mp4';
 
@@ -451,8 +567,10 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
 -map "[outa]"
 -c:v libx264
 -c:a aac
+-pix_fmt yuv420p
 -preset ultrafast
 -crf 23
+-movflags +faststart
 -y "$outputPath"
 '''
             .trim()
@@ -463,7 +581,7 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     final returnCode = await session.getReturnCode();
 
     // Cleanup downloaded remote video
-    await File(remoteVideoPath).delete();
+    // await File(remoteVideoPath).delete();
 
     if (ReturnCode.isSuccess(returnCode)) {
       debugPrint('[Concat] ✅ Concatenated output: $outputPath');
@@ -497,20 +615,21 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
     // Step 1: Download remote video
-    final remoteVideoPath = '${dir.path}/remote_video_$timestamp.mp4';
+    // final remoteVideoPath = '${dir.path}/remote_video_$timestamp.mp4';
+    final remoteVideoPath = remoteVideoUrl;
     debugPrint('[Concat] Downloading remote video from $remoteVideoUrl');
-    try {
-      final response = await http.get(Uri.parse(remoteVideoUrl));
-      if (response.statusCode != 200) {
-        debugPrint('[Concat] Failed to download: ${response.statusCode}');
-        return null;
-      }
-      await File(remoteVideoPath).writeAsBytes(response.bodyBytes);
-      debugPrint('[Concat] Remote video saved to $remoteVideoPath');
-    } catch (e) {
-      debugPrint('[Concat] Download exception: $e');
-      return null;
-    }
+    // try {
+    //   final response = await http.get(Uri.parse(remoteVideoUrl));
+    //   if (response.statusCode != 200) {
+    //     debugPrint('[Concat] Failed to download: ${response.statusCode}');
+    //     return null;
+    //   }
+    //   await File(remoteVideoPath).writeAsBytes(response.bodyBytes);
+    //   debugPrint('[Concat] Remote video saved to $remoteVideoPath');
+    // } catch (e) {
+    //   debugPrint('[Concat] Download exception: $e');
+    //   return null;
+    // }
 
     // Step 2: Probe audio and durations
     final localHasAudio = await _hasAudioStream(localVideoPath);
@@ -582,15 +701,15 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
         '${inputArgs.toString().trim()} '
         '-filter_complex "$filterComplex" '
         '-map "[outv]" -map "[outa]" '
-        '-c:v libx264 -c:a aac '
-        '-preset ultrafast -crf 23 '
+        '-c:v libx264 -c:a aac -pix_fmt yuv420p '
+        '-preset ultrafast -crf 23 -movflags +faststart '
         '-y "$outputPath"';
 
     debugPrint('[Concat] Running FFmpeg: $ffmpegCmd');
     final session = await FFmpegKit.execute(ffmpegCmd);
     final returnCode = await session.getReturnCode();
 
-    await File(remoteVideoPath).delete();
+    // await File(remoteVideoPath).delete();
 
     if (ReturnCode.isSuccess(returnCode)) {
       debugPrint('[Concat] ✅ Output: $outputPath');
@@ -602,47 +721,66 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     }
   }
 
-  static Future<String?> concatenateVideosLocal({required String localVideoPath, required String remoteVideoUrl}) async {
+  static Future<String?> concatenateVideosLocal({
+    required String localVideoPath,
+    required String remoteVideoUrl, // local path despite the name
+  }) async {
     final dir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    // Step 1: Download remote video
-    final remoteVideoPath = remoteVideoUrl;
-
-    // Step 2: Probe audio and durations
+    // Step 1: Probe audio streams
     final localHasAudio = await _hasAudioStream(localVideoPath);
-    final remoteHasAudio = await _hasAudioStream(remoteVideoPath);
+    final remoteHasAudio = await _hasAudioStream(remoteVideoUrl);
+
     debugPrint('[Concat] Audio — local: $localHasAudio, remote: $remoteHasAudio');
 
-    // Only need duration for videos missing audio — anullsrc must be bounded
+    // Step 2: Get durations only for videos missing audio (bounds anullsrc)
     double? localDuration;
     double? remoteDuration;
+
     if (!localHasAudio) {
       localDuration = await _getVideoDuration(localVideoPath);
       if (localDuration == null) {
         debugPrint('[Concat] ❌ Could not determine local video duration');
         return null;
       }
-      debugPrint('[Concat] Local video duration: ${localDuration}s');
     }
+
     if (!remoteHasAudio) {
-      remoteDuration = await _getVideoDuration(remoteVideoPath);
+      remoteDuration = await _getVideoDuration(remoteVideoUrl);
       if (remoteDuration == null) {
         debugPrint('[Concat] ❌ Could not determine remote video duration');
         return null;
       }
-      debugPrint('[Concat] Remote video duration: ${remoteDuration}s');
     }
 
-    // Step 3: Build inputs with correct index tracking
+    // Step 3: Probe dimensions to support iPad landscape + phone portrait
+    final localSize = await _getVideoSize(localVideoPath);
+    final int outW;
+    final int outH;
+
+    if (localSize != null && localSize.width > localSize.height) {
+      outW = 1920;
+      outH = 1080; // landscape (iPad, rotated phone)
+    } else {
+      outW = 1080;
+      outH = 1920; // portrait (default phone)
+    }
+
+    debugPrint(
+      '[Concat] Output: ${outW}x$outH '
+      '(probed: ${localSize?.width}x${localSize?.height})',
+    );
+
+    // Step 4: Build input args with explicit index tracking
     final inputArgs = StringBuffer();
     int nextIndex = 0;
 
-    late final String localAudioRef;
-    late final String remoteAudioRef;
+    // Nullable instead of late final — avoids LateInitializationError
+    String? localAudioRef;
+    String? remoteAudioRef;
 
     if (!localHasAudio) {
-      // d= bounds the silent stream to exactly the video's duration
       inputArgs.write('-f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=44100:d=${localDuration!.toStringAsFixed(6)}" ');
       localAudioRef = '$nextIndex:a';
       nextIndex++;
@@ -659,66 +797,118 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     nextIndex++;
 
     final remoteVideoIndex = nextIndex;
-    inputArgs.write('-i "$remoteVideoPath" ');
+    inputArgs.write('-i "$remoteVideoUrl" ');
 
     if (localHasAudio) localAudioRef = '$localVideoIndex:a';
     if (remoteHasAudio) remoteAudioRef = '$remoteVideoIndex:a';
 
-    // Step 4: Build filter_complex
+    // Guard: both must be resolved before proceeding
+    if (localAudioRef == null || remoteAudioRef == null) {
+      debugPrint('[Concat] ❌ Audio ref resolution failed');
+      return null;
+    }
+
+    // Step 5: Build filter_complex
+    //  • format=yuv420p      — hardware-decodable on all iOS/iPadOS
+    //  • aresample + asettb  — normalises timestamps, prevents A/V drift
+    final videoFilter =
+        'scale=${outW}:${outH}:force_original_aspect_ratio=decrease,'
+        'pad=${outW}:${outH}:(ow-iw)/2:(oh-ih)/2:color=black,'
+        'setsar=1,fps=fps=30,format=yuv420p';
+
     final filterComplex = [
-      '[$localVideoIndex:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v0]',
-      '[$remoteVideoIndex:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1]',
-      '[$localAudioRef]aformat=sample_rates=44100:channel_layouts=stereo[a0]',
-      '[$remoteAudioRef]aformat=sample_rates=44100:channel_layouts=stereo[a1]',
+      '[$localVideoIndex:v]$videoFilter[v0]',
+      '[$remoteVideoIndex:v]$videoFilter[v1]',
+      '[$localAudioRef]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo,asettb=1/44100[a0]',
+      '[$remoteAudioRef]aresample=44100,aformat=sample_fmts=fltp:channel_layouts=stereo,asettb=1/44100[a1]',
       '[v0][a0][v1][a1]concat=n=2:v=1:a=1[outv][outa]',
     ].join(';');
 
     final outputPath = '${dir.path}/concatenated_$timestamp.mp4';
 
+    // Step 6: Run FFmpeg
+    //  • -profile:v baseline -level 4.1  — broadest iPad hardware decoder support
+    //  • -movflags +faststart             — smoother playback start
+    //  • -pix_fmt yuv420p                 — belt-and-suspenders after filter_complex
     final ffmpegCmd =
         '${inputArgs.toString().trim()} '
         '-filter_complex "$filterComplex" '
         '-map "[outv]" -map "[outa]" '
-        '-c:v libx264 -c:a aac '
+        '-c:v libx264 -profile:v baseline -level:v 4.1 '
         '-preset ultrafast -crf 23 '
+        '-pix_fmt yuv420p '
+        '-c:a aac -b:a 128k -ar 44100 -ac 2 '
+        '-movflags +faststart '
         '-y "$outputPath"';
 
     debugPrint('[Concat] Running FFmpeg: $ffmpegCmd');
+
     final session = await FFmpegKit.execute(ffmpegCmd);
     final returnCode = await session.getReturnCode();
-
-    await File(remoteVideoPath).delete();
 
     if (ReturnCode.isSuccess(returnCode)) {
       debugPrint('[Concat] ✅ Output: $outputPath');
       return outputPath;
     } else {
       final logs = await session.getAllLogsAsString();
-      debugPrint('[Concat] ❌ FFmpeg failed: $logs');
+      debugPrint('[Concat] ❌ FFmpeg failed:\n$logs');
       return null;
     }
+  }
+
+  static Future<({dynamic height, dynamic width})?> _getVideoSize(String path) async {
+    try {
+      final session = await FFprobeKit.getMediaInformation(path);
+      final info = session.getMediaInformation();
+      if (info == null) return null;
+      for (final stream in info.getStreams() ?? []) {
+        final w = stream.getWidth();
+        final h = stream.getHeight();
+        if (w != null && h != null && w > 0 && h > 0) {
+          return (width: w, height: h);
+        }
+      }
+    } catch (e) {
+      debugPrint('[Concat] _getVideoSize error: $e');
+      throw Sentry.addBreadcrumb(Breadcrumb(message: '[Concat] _getVideoSize error: $e', level: SentryLevel.error));
+    }
+    return null;
   }
 
   /// Creates an 8-second video from 4 images (each image = 0.25s, looped 8 times)
   static Future<String> createGif({required List<File> photos}) async {
-    assert(photos.length == 4, 'Exactly 4 photos required');
+    if (photos.length != 4) {
+      throw Exception('Exactly 4 photos required, got ${photos.length}');
+    }
 
     final dir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
-    // ── Step 1: Create 1-second video from 4 photos (each shown for 0.25s) ──
+    // Probe first photo to determine orientation (iPad vs phone)
+    final photoSize = await _getImageSize(photos.first);
+    final int outW;
+    final int outH;
+    if (photoSize != null && photoSize.width > photoSize.height) {
+      outW = 1920;
+      outH = 1080; // landscape
+    } else {
+      outW = 1080;
+      outH = 1920; // portrait
+    }
+
+    debugPrint('[GIF] Output resolution: ${outW}x$outH');
+
+    // ── Step 1: 4 photos → 1-second video (each photo = 0.25s) ──────────────
     final oneSecOutputPath = '${dir.path}/one_sec_$timestamp.mp4';
 
-    // framerate=4 means 4 frames per second, each image = 1 frame = 0.25s
-    // We list each image as a separate input with -loop and -t
     final inputArgs = photos.map((f) => '-loop 1 -t 0.25 -i "${f.path}"').join(' ');
 
-    // Build filter: scale all to 1080x1920, then concat
     final scaleFilters = List.generate(
       photos.length,
       (i) =>
-          '[$i:v]scale=1080:1920:force_original_aspect_ratio=decrease,'
-          'pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,setpts=PTS-STARTPTS[v$i]',
+          '[$i:v]scale=$outW:$outH:force_original_aspect_ratio=decrease,'
+          'pad=$outW:$outH:(ow-iw)/2:(oh-ih)/2:color=black,'
+          'setsar=1,format=yuv420p,setpts=PTS-STARTPTS[v$i]',
     ).join(';');
 
     final concatInputs = List.generate(photos.length, (i) => '[v$i]').join('');
@@ -731,41 +921,68 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
         '$inputArgs '
         '-filter_complex "$filterComplex" '
         '-map "[outv]" '
-        '-c:v libx264 -preset fast -crf 18 '
+        '-c:v libx264 -profile:v baseline -level:v 4.1 '
+        '-preset fast -crf 18 '
         '-pix_fmt yuv420p '
-        '-r 30 ' // 30fps output
-        '-an ' // no audio
+        '-r 30 '
+        '-movflags +faststart '
         '-y "$oneSecOutputPath"';
 
-    await _execute(step1Command);
+    final session1 = await FFmpegKit.execute(step1Command);
+    final rc1 = await session1.getReturnCode();
 
-    if (!await File(oneSecOutputPath).exists()) {
-      throw Exception('Step 1 failed: 1-second video not created');
+    if (!ReturnCode.isSuccess(rc1)) {
+      final logs = await session1.getAllLogsAsString();
+      throw Sentry.addBreadcrumb(Breadcrumb(message: '[GIF] Step 1 failed: $logs', level: SentryLevel.error));
+      throw Exception('createGif step 1 failed: $logs');
     }
 
-    // ── Step 2: Loop that 1-second video 8 times → 8-second video ────────────
+    // ── Step 2: Loop 1-second video 8× → 8-second video ────────────────────
     final finalOutputPath = '${dir.path}/looped_photo_video_$timestamp.mp4';
 
-    // -stream_loop 7 means play the input 1 + 7 = 8 times
+    // -c:v copy avoids re-encoding — pixels are already correct from step 1
     final step2Command =
         '-stream_loop 7 '
         '-i "$oneSecOutputPath" '
-        '-c:v libx264 -preset fast -crf 18 '
-        '-pix_fmt yuv420p '
+        '-c:v copy ' // no re-encode needed
         '-t 8 ' // hard cap at exactly 8 seconds
         '-an '
+        '-movflags +faststart '
         '-y "$finalOutputPath"';
 
-    await _execute(step2Command);
+    final session2 = await FFmpegKit.execute(step2Command);
+    final rc2 = await session2.getReturnCode();
 
-    // ── Cleanup intermediate ──────────────────────────────────────────────────
-    await File(oneSecOutputPath).delete();
+    // Cleanup intermediate regardless of step 2 outcome
+    try {
+      await File(oneSecOutputPath).delete();
+    } catch (_) {}
 
-    if (!await File(finalOutputPath).exists()) {
-      throw Exception('Step 2 failed: looped video not created');
+    if (!ReturnCode.isSuccess(rc2)) {
+      final logs = await session2.getAllLogsAsString();
+      throw Sentry.addBreadcrumb(Breadcrumb(message: '[GIF] Step 2 failed: $logs', level: SentryLevel.error));
+      // throw Exception('createGif step 2 failed: $logs');
     }
 
     return finalOutputPath;
+  }
+
+  static Future<({dynamic height, dynamic width})?> _getImageSize(File file) async {
+    try {
+      final session = await FFprobeKit.getMediaInformation(file.path);
+      final info = session.getMediaInformation();
+      if (info == null) return null;
+      for (final stream in info.getStreams() ?? []) {
+        final w = stream.getWidth();
+        final h = stream.getHeight();
+        if (w != null && h != null && w > 0 && h > 0) {
+          return (width: w, height: h);
+        }
+      }
+    } catch (e) {
+      debugPrint('[GIF] _getImageSize error: $e');
+    }
+    return null;
   }
 
   static Future<XFile?> applyOverlayOnNetworkImage(String imageUrl) async {
@@ -792,19 +1009,21 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
 
       if (overlayUrl != null && overlayUrl.isNotEmpty) {
-        final overlayResponse = await http.get(Uri.parse(overlayUrl));
+        // final overlayResponse = await http.get(Uri.parse(overlayUrl));
 
-        if (overlayResponse.statusCode == 200) {
-          img.Image? overlayImage = img.decodeImage(overlayResponse.bodyBytes);
+        // if (overlayResponse.statusCode == 200) {
+        final byteData = await rootBundle.load(overlayUrl);
+        var data = byteData.buffer.asUint8List();
+        img.Image? overlayImage = img.decodeImage(data);
 
-          if (overlayImage != null) {
-            final resizedOverlay = img.copyResize(overlayImage, width: baseImage.width, height: baseImage.height);
+        if (overlayImage != null) {
+          final resizedOverlay = img.copyResize(overlayImage, width: baseImage.width, height: baseImage.height);
 
-            img.compositeImage(baseImage, resizedOverlay);
-          }
-        } else {
-          Logger.log('Overlay skipped: HTTP ${overlayResponse.statusCode}');
+          img.compositeImage(baseImage, resizedOverlay);
         }
+        // } else {
+        //   Logger.log('Overlay skipped: HTTP ${overlayResponse.statusCode}');
+        // }
       }
 
       // 4️⃣ Save new image locally

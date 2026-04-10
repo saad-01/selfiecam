@@ -49,26 +49,22 @@ class ApiCalls {
               "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995",
             },
           )
-        : Options(
-            headers: {
-              "Content-Type": "application/json",
-              "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995",
-            },
-          );
+        : Options(headers: {"Content-Type": "application/json", "x-app-secret": "e7053b3b07076b7e9949faa0c6978697721b0995"});
   }
 
   ///
   ///Url : pass end point without base url
   ///isAuth : pass false if you want to call post API without auth token true is set as defualt
   ///
-  static Future<ResponseModel> getAPICall({required String url, bool isAuth = true, bool showError = true}) async {
+  static Future<ResponseModel> getAPICall({required String url, bool isAuth = true, bool showError = true, bool eventJoined = false}) async {
     // addInterceptor(isAuth: isAuth);
     try {
       log('this is my userToken ${PrefUtils().getUserToken()}');
       Logger.log("This is my Token: ${PrefUtils().getUserToken()}");
       Logger.log("API URL: ${ApiUrls.baseUrl + url}");
-
-      final response = await dioClient.get(ApiUrls.baseUrl + url, options: getAuth(isAuth));
+      var options = getAuth(isAuth, eventJoined: eventJoined);
+      Logger.log("Request Headers: ${options.headers}");
+      final response = await dioClient.get(ApiUrls.baseUrl + url, options: options);
       if (response.statusCode == 200) {
         Logger.log("Response: ${jsonEncode(response.data)}");
         return ResponseModel(statusCode: 200, data: response.data);
@@ -222,14 +218,14 @@ class ApiCalls {
       if (isAuth) {
         Logger.log('Bearer ${PrefUtils().getUserToken()}');
       }
-     Logger.log("header: ${getAuth(isAuth, eventJoined: eventJoined).headers}");
+      Logger.log("header: ${getAuth(isAuth, eventJoined: eventJoined).headers}");
       final response = await dioClient.post(
         ApiUrls.baseUrl + url,
         data: bodyParams,
         options: getAuth(isAuth, eventJoined: eventJoined),
       );
       Logger.log("Status Code: ${response.statusCode}");
- 
+
       Logger.log("Response: ${response.data}");
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
         return ResponseModel(data: response.data, statusCode: 200);

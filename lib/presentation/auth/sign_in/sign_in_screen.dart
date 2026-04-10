@@ -6,6 +6,7 @@ import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/presentation/component/button_component.dart';
 import 'package:selfiecam1/presentation/component/textfield_component.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sizer/sizer.dart';
 import '../../../controller/sign_in_controller.dart';
 

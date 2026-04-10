@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:selfiecam1/controller/animation_controller.dart';
 import 'package:selfiecam1/controller/cam_controller.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/presentation/component/button_component.dart';
 import 'package:selfiecam1/presentation/component/progress_bar.dart';
 import 'package:sizer/sizer.dart';
 
@@ -76,11 +75,8 @@ class _CountdownScreenState extends State<CountdownScreen> {
             ),
             if (deviceController.branding.value?.photoVideoOverlay != null &&
                 deviceController.branding.value!.photoVideoOverlay!.isNotEmpty)
-              CachedNetworkImage(
-                imageUrl: deviceController.branding.value?.photoVideoOverlay ?? '',
-                fit: BoxFit.fill,
-                errorWidget: (context, url, error) => const SizedBox.shrink(),
-              ),
+              Image.asset(deviceController.branding.value?.photoVideoOverlay ?? '', fit: BoxFit.fill),
+            // Image.asset(AppAssets.demoFilter ?? '', fit: BoxFit.fill),
             if (controller.startAnimaton.value)
               Positioned(
                 top: 0,
@@ -99,7 +95,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                       scale: controller.scaleAnimation.value,
                       child: Text(
                         controller.counter.value.toString(),
-                        style: TextStyle(fontSize: 88.sp, fontWeight: FontWeight.bold, color: Colors.black),
+                        style: TextStyle(fontSize: 630, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                     );
                   },
@@ -128,7 +124,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                               ? "GET READY FOR A PHOTO SHOOT! ".toUpperCase()
                               : "GET READY TO STIKE A POSE!".toUpperCase(),
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.black, fontSize: 30.sp, fontWeight: FontWeight.w300),
+                          style: TextStyle(color: Colors.black, fontSize: 80, fontWeight: FontWeight.w300),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -136,7 +132,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                             Text(
                               "IT’S A ".toUpperCase(),
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.black, fontSize: 33.sp, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -156,7 +152,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                                   ? "Gif".toUpperCase()
                                   : "PHOTO".toUpperCase(),
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.black, fontSize: 33.sp, fontWeight: FontWeight.w900),
+                              style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900),
                             ),
                           ],
                         ),
@@ -184,6 +180,27 @@ class _CountdownScreenState extends State<CountdownScreen> {
                         "LOOK 👆🏻 HERE",
                         style: TextStyle(color: Colors.white, fontSize: 20.sp, fontWeight: FontWeight.w500),
                       ),
+                    ),
+                  ),
+                ),
+              ),
+            if (camController.isRecording.value && (widget.type == 'Shoutout'))
+              Positioned(
+                bottom: 100,
+                left: 0,
+                right: 0,
+                child: Align(
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: 300,
+                    child: ButtonComponent(
+                      text: 'STOP',
+                      borderRadius: 0.0,
+                      backgroundColor: Colors.red,
+                      fontColor: Colors.white,
+                      onPressed: () async {
+                        await camController.stopShoutout(widget.type);
+                      },
                     ),
                   ),
                 ),

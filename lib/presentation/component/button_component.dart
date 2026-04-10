@@ -8,6 +8,7 @@ class ButtonComponent extends StatelessWidget {
   final VoidCallback? onPressed;
 
   final Color? backgroundColor;
+  final Color? fontColor;
   final double? borderRadius;
   final double? verticalPadding;
   final double? horizontalPadding;
@@ -18,6 +19,7 @@ class ButtonComponent extends StatelessWidget {
     this.text,
     this.onPressed,
     this.backgroundColor,
+    this.fontColor,
     this.borderRadius,
     this.verticalPadding,
     this.horizontalPadding,
@@ -35,7 +37,7 @@ class ButtonComponent extends StatelessWidget {
     final TextStyle _defaultTextStyle = TextStyle(
       fontFamily: 'Akshar',
       fontSize: 22.sp,
-      color: Colors.black,
+      color: fontColor ?? Colors.black,
       fontWeight: FontWeight.w700,
     );
 

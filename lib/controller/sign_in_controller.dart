@@ -6,8 +6,13 @@ import 'package:flutter_device_info_plus/flutter_device_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
+import 'package:selfiecam1/data/services/credentials.dart';
 import 'package:selfiecam1/data/services/device_id_service.dart';
+import 'package:selfiecam1/data/services/internet_service.dart';
+import 'package:selfiecam1/data/services/internet_service_adapter.dart';
 import 'package:selfiecam1/data/services/socket_service.dart';
+import 'package:selfiecam1/data/services/upload_queue_service.dart';
+import 'package:selfiecam1/data/services/upload_repository.dart';
 import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/api_client.dart';
@@ -126,7 +131,9 @@ class SignInController extends GetxController {
             },
             "deviceHealth": {
               "batteryLevel": _batteryInfo!.batteryLevel,
+              // "batteryLevel": 100,
               "batteryCharging": _batteryInfo!.isCharging,
+              // "batteryCharging":false,
               "storageTotal": _deviceInformation?.memoryInfo.totalStorageSpace,
               "storageUsed": _deviceInformation?.memoryInfo.usedStorageSpace,
               "storageFree": _deviceInformation?.memoryInfo.availableStorageSpace,
@@ -171,8 +178,25 @@ class SignInController extends GetxController {
         PrefUtils().saveString("eventId", data['_id']);
         PrefUtils().saveString("eventName", data['eventName']);
         await DeviceController.to.getJoinedEvent();
+        await DeviceController.to.getSettingsDisclaimers();
         SocketService.init();
         unawaited(DeviceController.to.loadAllInfo());
+        await Get.putAsync(() async {
+          final service = UploadQueueService(
+            repository: UploadRepository(),
+            connectivity: InternetServiceAdapter(Get.find<InternetService>()),
+            credentials: MyCredentialsProvider(),
+          );
+          await service.init();
+          return service;
+        }, permanent: true);
+        if (DeviceController.to.branding.value!.homeVideo != null && DeviceController.to.branding.value!.homeVideo!.isNotEmpty) {
+          await DeviceController.to.initVideoPreviewForOverlay(DeviceController.to.branding.value!.homeVideo!);
+        }
+        if (DeviceController.to.branding.value!.homeNoActivityVideo != null &&
+            DeviceController.to.branding.value!.homeNoActivityVideo!.isNotEmpty) {
+          await DeviceController.to.initVideoPreviewForActivity(DeviceController.to.branding.value!.homeNoActivityVideo!);
+        }
         Get.offAllNamed(Routes.EXPERIENCESELECTION2);
         CustomSnackbar.showSuccess("Login Successful");
       } else {

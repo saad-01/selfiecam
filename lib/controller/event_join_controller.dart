@@ -48,7 +48,7 @@ class EventJoinController extends GetxController {
       isAuth: true,
       bodyParams: {"eventId": event['_id']},
     );
-    loader.hide();
+
     Logger.log("Joined Event: ${response.data['data']['lastEventId']['eventName']}");
     if (response.statusCode == 200) {
       Logger.log("Joined Event: ${response.data['data']['lastEventId']['eventName']}");
@@ -58,8 +58,10 @@ class EventJoinController extends GetxController {
       Logger.log("Joined Event: ${response.data['data']['lastEventId']['eventName']}");
       PrefUtils().saveString("eventName", response.data['data']['lastEventId']['eventName']);
       await DeviceController.to.getJoinedEvent();
+      await DeviceController.to.getSettingsDisclaimers();
       SocketService.init();
       unawaited(DeviceController.to.loadAllInfo());
+      loader.hide();
       Get.offAllNamed(Routes.EXPERIENCESELECTION2);
     } else {
       CustomSnackbar.showError("${response.data ?? 'Failed to join event'}");

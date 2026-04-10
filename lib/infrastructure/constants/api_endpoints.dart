@@ -13,4 +13,6 @@ class ApiUrls {
   static const String uploadImage = 'image/upload';
   static const String aiGenerateStyle = 'ai/generate-style';
   static const String imageUploadAiStyle = 'image/upload/ai-style';
+  static const String settingsDisclaimers = 'settings/disclaimers';
+  static const String leadCaptureContacts = 'lead-capture/leads/contacts';
 }

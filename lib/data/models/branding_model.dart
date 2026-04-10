@@ -14,6 +14,10 @@ class Branding {
   final String? homeOverlay;
   final String? photoVideoOverlay;
   final String? promoVideo;
+  final String? homeScreenMode;
+  final String? homeVideo;
+  final String? homeNoActivityVideo;
+  final String? homeImage;
 
   final bool enablePromoBoomerang;
   final bool enablePromoShoutout;
@@ -25,8 +29,6 @@ class Branding {
   final bool enableAudioGif;
   final bool enableAudioSlowmo;
   final double fontSize;
-  final BrandingEmail contentEmail;
-  final BrandingEmail thankYouEmail;
 
   final String smsMessage;
 
@@ -44,6 +46,10 @@ class Branding {
     this.homeOverlay,
     this.photoVideoOverlay,
     this.promoVideo,
+    this.homeScreenMode,
+    this.homeVideo,
+    this.homeImage,
+    this.homeNoActivityVideo,
     required this.enablePromoBoomerang,
     required this.enablePromoShoutout,
     required this.enablePromoAnimatedGif,
@@ -52,8 +58,6 @@ class Branding {
     required this.enableAudioBoomerang,
     required this.enableAudioGif,
     required this.enableAudioSlowmo,
-    required this.contentEmail,
-    required this.thankYouEmail,
     required this.smsMessage,
     required this.createdAt,
     required this.updatedAt,
@@ -71,6 +75,10 @@ class Branding {
       fontColor: json['fontColor'] ?? '',
       fontSize: json['fontSize'] != null ? (json['fontSize'] as num).toDouble() : 18.0,
       homeOverlay: json['homeOverlay'],
+      homeVideo: json['homeVideo'],
+      homeNoActivityVideo: json['homeNoActivityVideo'],
+      homeImage: json['homeImage'],
+      homeScreenMode: json['homeScreenMode'],
       photoVideoOverlay: json['photoVideoOverlay'],
       promoVideo: json['promoVideo'],
       enablePromoBoomerang: json['enablePromoBoomerang'] ?? false,
@@ -81,8 +89,6 @@ class Branding {
       enableAudioBoomerang: json['enableAudioBoomerang'] ?? false,
       enableAudioGif: json['enableAudioGif'] ?? false,
       enableAudioSlowmo: json['enableAudioSlowmo'] ?? false,
-      contentEmail: BrandingEmail.fromJson(json['contentEmail'] ?? {}),
-      thankYouEmail: BrandingEmail.fromJson(json['thankYouEmail'] ?? {}),
       smsMessage: json['smsMessage'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
@@ -100,6 +106,10 @@ class Branding {
       'fontSize': fontSize,
       'fontColor': fontColor,
       'homeOverlay': homeOverlay,
+      'homeVideo': homeVideo,
+      'homeNoActivityVideo': homeNoActivityVideo,
+      'homeImage': homeImage,
+      'homeScreenMode': homeScreenMode,
       'photoVideoOverlay': photoVideoOverlay,
       'promoVideo': promoVideo,
       'enablePromoBoomerang': enablePromoBoomerang,
@@ -110,11 +120,41 @@ class Branding {
       'enableAudioBoomerang': enableAudioBoomerang,
       'enableAudioGif': enableAudioGif,
       'enableAudioSlowmo': enableAudioSlowmo,
-      'contentEmail': contentEmail.toJson(),
-      'thankYouEmail': thankYouEmail.toJson(),
       'smsMessage': smsMessage,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+}
+
+class SettingsModel {
+  final String privacyPolicyUrl;
+  final String photoReleaseAgreementUrl;
+  final String termsUrl;
+  final bool explicitDisclaimerEnabled;
+
+  SettingsModel({
+    required this.privacyPolicyUrl,
+    required this.photoReleaseAgreementUrl,
+    required this.termsUrl,
+    required this.explicitDisclaimerEnabled,
+  });
+
+  factory SettingsModel.fromJson(Map<String, dynamic> json) {
+    return SettingsModel(
+      termsUrl: json['termsUrl'] ?? '',
+      privacyPolicyUrl: json['privacyPolicyUrl'] ?? '',
+      photoReleaseAgreementUrl: json['photoReleaseAgreementUrl'] ?? '',
+      explicitDisclaimerEnabled: json['explicitDisclaimerEnabled'] ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "explicitDisclaimerEnabled": explicitDisclaimerEnabled,
+      "privacyPolicyUrl": privacyPolicyUrl,
+      "termsUrl": termsUrl,
+      "photoReleaseAgreementUrl": photoReleaseAgreementUrl,
     };
   }
 }

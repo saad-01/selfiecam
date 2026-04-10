@@ -55,6 +55,7 @@ dependencies:
   camera: ^0.11.2
   image: ^4.1.7
   image_gallery_saver: ^2.0.3
+  # image_gallery_saver_plus: ^4.0.1
   permission_handler: ^11.3.1
   path: ^1.9.0
   uuid: ^4.5.2
@@ -62,8 +63,13 @@ dependencies:
   flutter_svg: ^2.2.1
   cached_network_image: ^3.4.1
   google_fonts: ^6.3.2
-  ffmpeg_kit_flutter_new: ^3.1.0
+  ffmpeg_kit_flutter_new: ^4.1.0
   video_player: ^2.10.1
+  hive_flutter: ^1.1.0
+  hive: ^2.2.3
+  sentry_flutter: ^9.16.0
+  intl: ^0.20.2
+  # internet_speed_test_new: ^1.0.10
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +80,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  hive_generator: ^2.0.1     # Generates .g.dart adapters (optional – hand-written
+  build_runner: ^2.4.9       # adapters are included and ready to use without it)
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

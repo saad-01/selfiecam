@@ -38,7 +38,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.SIGNUP,
-      page: () => SignupWebview(),
+      page: () => SignupWebview(url: "https://hub.selfiecam.ai/auth/register",),
       // binding: InitialBindings(),
     ),
     GetPage(
@@ -78,7 +78,7 @@ class Nav {
     // ),
     GetPage(
       name: Routes.SENDITTOME,
-      page: () => const SenItToMeScreen(),
+      page: () => const SenItToMeScreen(type: '',),
       // binding: InitialBindings(),
     ),
     GetPage(

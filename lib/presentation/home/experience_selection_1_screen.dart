@@ -1,12 +1,18 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
 import 'package:selfiecam1/controller/settings_controller.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/event_join_screen.dart';
+import 'package:selfiecam1/presentation/auth/sign_in/signup_webview.dart';
 import 'package:selfiecam1/presentation/component/back_button.dart';
 import 'package:selfiecam1/presentation/component/button_component1.dart';
+import 'package:selfiecam1/presentation/home/pending_uploads.dart';
+import 'package:selfiecam1/presentation/home/test_bandwidth.dart';
 import '../../infrastructure/constants/app_assets.dart';
 import 'package:sizer/sizer.dart';
 
@@ -18,7 +24,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final controller = Get.put(SettingsController());
+  final controller = Get.find<SettingsController>();
   final deviceController = DeviceController.to;
   // bool _isImagePrecached = false;
   // @override
@@ -57,7 +63,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: InkWell(
               child: Icon(Icons.logout, color: Colors.white, size: 4.h),
               onTap: () async {
+                DeviceController.to.clearSession();
                 await PrefUtils().clearPreferencesData();
+
+                /// 1️⃣ Clear Hive boxes
+                if (Hive.isBoxOpen("brandingBox")) {
+                  await Hive.box("brandingBox").clear();
+                }
+
+                if (Hive.isBoxOpen("experiencesBox")) {
+                  await Hive.box("experiencesBox").clear();
+                }
+                SettingsController.to.resetAllSettings();
+
+                /// 2️⃣ Delete downloaded media folder
+                final dir = await getApplicationDocumentsDirectory();
+                final mediaDir = Directory("${dir.path}/event_media");
+
+                if (await mediaDir.exists()) {
+                  await mediaDir.delete(recursive: true);
+                }
                 Get.offAllNamed(Routes.SIGNIN);
               },
             ),
@@ -71,7 +96,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      height: 8.h,
+                      height: 5.h,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -87,12 +112,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('SELECT EXPERIENCE', style: textTheme.displayLarge),
+                        Text(
+                          'SELECT EXPERIENCE',
+                          style: textTheme.displayLarge!.copyWith(fontSize: 25.sp, fontWeight: FontWeight.bold),
+                        ),
                         Text(
                           'Tap an experience to let users choose',
-                          style: textTheme.labelMedium!.copyWith(letterSpacing: 0.3.w, fontWeight: FontWeight.w100),
+                          style: textTheme.labelMedium!.copyWith(
+                            letterSpacing: 0.3.w,
+                            fontWeight: FontWeight.w100,
+                            fontSize: 15.sp,
+                          ),
                         ),
-                        SizedBox(height: 3.h),
+                        SizedBox(height: 2.h),
 
                         // SizedBox(
                         //   width: 90.w,
@@ -136,98 +168,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         //     ),
                         //   ),
                         // ),
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 20.w),
-                          child: Column(
-                            children: [
-                              Row(
-                                spacing: 1.w,
-                                children: [
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.selfie,
-                                    iconSize: 6.h,
-                                    label: 'Photo',
-                                    onPressed: () {
-                                      Get.toNamed(Routes.COUNTDOWN);
-                                    },
-                                  ),
-
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.boomerang,
-                                    iconSize: 6.h,
-                                    label: 'Boomerang',
-                                    onPressed: () {
-                                      // Get.toNamed(Routes.WELCOME2);
-                                    },
-                                  ),
-
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.gif,
-                                    iconSize: 6.h,
-                                    label: 'GIF',
-                                    onPressed: () {
-                                      // Get.toNamed(Routes.WELCOME2);
-                                    },
-                                  ),
-                                ],
-                              ),
-                              Gap(1.h),
-                              Row(
-                                spacing: 1.w,
-                                children: [
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.shoutout,
-                                    iconSize: 6.h,
-                                    label: 'Shoutout',
-                                    onPressed: () {
-                                      // Get.toNamed(Routes.WELCOME2);
-                                    },
-                                  ),
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.slowmo,
-                                    iconSize: 6.h,
-                                    label: 'Slowmo',
-                                    onPressed: () {
-                                      // Get.toNamed(Routes.WELCOME2);
-                                    },
-                                  ),
-                                  CustomIconButton1(
-                                    containerHeight: 18.h,
-                                    containerWidth: 18.w,
-                                    borderRadius: 0.0,
-                                    // color: const Color(0xff500F86),
-                                    icon: AppAssets.slowmo,
-                                    iconSize: 6.h,
-                                    label: 'AI Photo',
-                                    onPressed: () {
-                                      // Get.toNamed(Routes.WELCOME2);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
 
                         // // Padding(
                         //   padding: EdgeInsets.symmetric(horizontal: 14.0.w),
@@ -239,18 +179,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         //     ],
                         //   ),
                         // ),
-                        SizedBox(height: 5.h),
+                        experiencesGrid(),
+                        SizedBox(height: 3.h),
                         SizedBox(
                           width: 90.w,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               CustomUtilityButton(
-                                text: 'Refresh',
+                                text: 'Change Event',
                                 color: const Color(0xFF00B09B),
                                 borderRadius: 0.0,
                                 onPressed: () {
-                                  Get.toNamed(Routes.WELCOME1);
+                                  Get.to(() => EventDropdownView());
                                 },
                               ),
                               CustomUtilityButton(
@@ -258,7 +199,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 color: const Color(0xFFE50914),
                                 borderRadius: 0.0,
                                 onPressed: () {
-                                  Get.toNamed(Routes.WELCOME1);
+                                  Get.to(() => SpeedTest());
+                                  // Get.toNamed(Routes.WELCOME1);
                                 },
                               ),
                               CustomUtilityButton(
@@ -266,9 +208,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 color: const Color(0xFFFFC107),
                                 borderRadius: 0.0,
                                 onPressed: () {
-                                  Get.toNamed(Routes.WELCOME1);
+                                  // Get.toNamed(Routes.WELCOME1);
+                                  Get.to(() => PendingUploads());
                                 },
                               ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: 1.h),
+                        SizedBox(
+                          width: 90.w,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              SizedBox(width: 30.w),
+                              CustomUtilityButton(
+                                text: 'DASHBOARD',
+                                color: const Color.fromARGB(255, 120, 0, 176),
+                                borderRadius: 0.0,
+                                onPressed: () {
+                                  Get.to(() => SignupWebview(url: "https://hub.selfiecam.ai/auth/login"));
+                                },
+                              ),
+
+                              SizedBox(width: 30.w),
                             ],
                           ),
                         ),
@@ -297,6 +260,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Widget experiencesGrid() {
+    return Obx(() {
+      final experiences = deviceController.experiences.value;
+      final branding = deviceController.branding.value;
+
+      if (experiences == null) return const SizedBox();
+
+      final items = deviceController.getEnabledExperiencesForSettings(experiences);
+
+      if (items.isEmpty) return const SizedBox();
+
+      final int crossAxisCount = items.length > 5 ? 3 : items.length;
+
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: items.length > 5 ? 18.w : 3.w),
+        child: GridView.builder(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: items.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 1.h,
+            crossAxisSpacing: 1.w,
+            mainAxisExtent: 14.h,
+            childAspectRatio: 1,
+          ),
+          itemBuilder: (context, index) {
+            final item = items[index];
+            final isEnabled = controller
+                .isEnabled(
+                  item.key,
+                  true, // helper below
+                )
+                .obs;
+            return Obx(
+              () => CustomIconButton1(
+                containerHeight: 14.h,
+                containerWidth: 14.w,
+                borderRadius: branding?.buttonStyle == 'rounded' ? 10 : 0,
+                color: isEnabled.value
+                    ? (branding?.buttonColor != null
+                          ? Color(int.parse('0xff${branding!.buttonColor.substring(1)}'))
+                          : const Color(0xff500F86))
+                    : Colors.grey.shade400, // 👈 DISABLED COLOR
+                icon: item.icon,
+                iconSize: 5.h,
+                font: branding?.fontFamily,
+                fontSize: 13.sp,
+                label: item.label,
+                iconColor: branding?.buttonTextColor != null
+                    ? Color(int.parse('0xff${branding!.buttonTextColor.substring(1)}'))
+                    : Colors.white,
+                onPressed: () {
+                  controller.toggle(item.key, !isEnabled.value);
+                  setState(() {});
+                },
+              ),
+            );
+          },
+        ),
+      );
+    });
   }
 }
 

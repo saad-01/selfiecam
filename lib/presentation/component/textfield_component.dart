@@ -12,6 +12,8 @@ class TextfieldComponent extends StatelessWidget {
   final double? verticalPadding;
   final double? horizontalPadding;
   final TextAlign? textAlign;
+  final bool? isRequired;
+  final void Function(String)? onChanged;
 
   const TextfieldComponent({
     super.key,
@@ -25,6 +27,8 @@ class TextfieldComponent extends StatelessWidget {
     this.verticalPadding,
     this.horizontalPadding,
     this.textAlign,
+    this.isRequired,
+    this.onChanged
   });
 
   @override
@@ -38,14 +42,29 @@ class TextfieldComponent extends StatelessWidget {
     final TextAlign _textAlign = textAlign ?? TextAlign.center;
 
     final inputDecoration = InputDecoration(
-      hintText: hintText?.toUpperCase(),
-      hintStyle: TextStyle(fontFamily: 'Akshar', color: const Color(0Xff8B8B8B), fontSize: 22.sp, fontWeight: FontWeight.w500),
+      hint: RichText(
+        textAlign: _textAlign,
+        text: TextSpan(
+          text: hintText?.toUpperCase(),
+          style: TextStyle(fontFamily: 'Akshar', color: const Color(0Xff8B8B8B), fontSize: 22.sp, fontWeight: FontWeight.w500),
+          children: isRequired != null && isRequired == true
+              ? [
+                  TextSpan(
+                    text: " *",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ]
+              : [],
+        ),
+      ),
+      // hintText: hintText?.toUpperCase(),
+      // hintStyle: TextStyle(fontFamily: 'Akshar', color: const Color(0Xff8B8B8B), fontSize: 22.sp, fontWeight: FontWeight.w500),
       border: InputBorder.none,
       focusedBorder: InputBorder.none,
       enabledBorder: InputBorder.none,
       disabledBorder: InputBorder.none,
-      // isDense: true,
 
+      // isDense: true,
       contentPadding: EdgeInsets.symmetric(vertical: _verticalPadding, horizontal: _horizontalPadding),
     );
 
@@ -56,6 +75,7 @@ class TextfieldComponent extends StatelessWidget {
         obscureText: _isObscure,
         keyboardType: keyboardType,
         enabled: _enabled,
+        onChanged: onChanged,
         textAlign: _textAlign,
         decoration: inputDecoration,
         style: TextStyle(color: Colors.black, fontSize: 22.sp, fontFamily: 'Akshar'),

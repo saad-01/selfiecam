@@ -77,18 +77,12 @@ class Photo {
 
   Photo({required this.enabled, required this.printOptionEnabled});
 
-  factory Photo.fromJson(Map<String, dynamic> json) {
-    return Photo(
-      enabled: json['enabled'] ?? false,
-      printOptionEnabled: json['printOptionEnabled'] ?? false,
-    );
+  factory Photo.fromJson(Map<dynamic, dynamic> json) {
+    return Photo(enabled: json['enabled'] ?? false, printOptionEnabled: json['printOptionEnabled'] ?? false);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'enabled': enabled,
-      'printOptionEnabled': printOptionEnabled,
-    };
+    return {'enabled': enabled, 'printOptionEnabled': printOptionEnabled};
   }
 }
 
@@ -98,18 +92,12 @@ class Shoutout {
 
   Shoutout({required this.enabled, required this.timeLimit});
 
-  factory Shoutout.fromJson(Map<String, dynamic> json) {
-    return Shoutout(
-      enabled: json['enabled'] ?? false,
-      timeLimit: json['timeLimit'] ?? 0,
-    );
+  factory Shoutout.fromJson(Map<dynamic, dynamic> json) {
+    return Shoutout(enabled: json['enabled'] ?? false, timeLimit: json['timeLimit'] ?? 0);
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'enabled': enabled,
-      'timeLimit': timeLimit,
-    };
+    return {'enabled': enabled, 'timeLimit': timeLimit};
   }
 }
 
@@ -128,7 +116,7 @@ class Boomerang {
     required this.motionSmoothing,
   });
 
-  factory Boomerang.fromJson(Map<String, dynamic> json) {
+  factory Boomerang.fromJson(Map<dynamic, dynamic> json) {
     return Boomerang(
       enabled: json['enabled'] ?? false,
       recordingLength: json['recordingLength'] ?? 0,
@@ -164,7 +152,7 @@ class Gif {
     required this.layout,
   });
 
-  factory Gif.fromJson(Map<String, dynamic> json) {
+  factory Gif.fromJson(Map<dynamic, dynamic> json) {
     return Gif(
       enabled: json['enabled'] ?? false,
       frameCount: json['frameCount'] ?? 0,
@@ -191,14 +179,9 @@ class SlowMotion {
   final double slowMotionSpeed;
   final int frameRate;
 
-  SlowMotion({
-    required this.enabled,
-    required this.recordingDuration,
-    required this.slowMotionSpeed,
-    required this.frameRate,
-  });
+  SlowMotion({required this.enabled, required this.recordingDuration, required this.slowMotionSpeed, required this.frameRate});
 
-  factory SlowMotion.fromJson(Map<String, dynamic> json) {
+  factory SlowMotion.fromJson(Map<dynamic, dynamic> json) {
     return SlowMotion(
       enabled: json['enabled'] ?? false,
       recordingDuration: json['recordingDuration'] ?? 0,
@@ -219,34 +202,29 @@ class SlowMotion {
 
 class AiStyles {
   final bool enabled;
+  final bool overlayEnabled;
   final List<dynamic> styles;
 
-  AiStyles({required this.enabled, required this.styles});
+  AiStyles({required this.enabled, required this.overlayEnabled, required this.styles});
 
-  factory AiStyles.fromJson(Map<String, dynamic> json) {
+  factory AiStyles.fromJson(Map<dynamic, dynamic> json) {
     return AiStyles(
       enabled: json['enabled'] ?? false,
+      overlayEnabled: json['photoOverlay'] ?? false,
       styles: json['styles'] ?? [],
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'enabled': enabled,
-      'styles': styles,
-    };
+    return {'enabled': enabled, 'photoOverlay': overlayEnabled, 'styles': styles};
   }
 }
+
 class ExperienceItem {
   final String key;
   final String label;
   final String icon;
   final VoidCallback onTap;
 
-  ExperienceItem({
-    required this.key,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+  ExperienceItem({required this.key, required this.label, required this.icon, required this.onTap});
 }
