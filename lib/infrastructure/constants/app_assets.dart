@@ -19,6 +19,7 @@ class AppAssets {
   static String alignLeft = '$iconPath/align-left.svg';
   static String aiPhoto = '$iconPath/ai-photo.png';
   static String lookIntoCamera = '$iconPath/arrow-alt-circle-up.svg';
+  static String paperPlane = '$iconPath/paper-airplane-svgrepo-com.svg';
   // static String qr = '$iconPath/qr.svg';
 
   //~~~~~~~~~~~~~~~~Images~~~~~~~~~~~~~~~~~~~~~~~~~//

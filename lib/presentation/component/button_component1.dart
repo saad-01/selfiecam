@@ -107,6 +107,7 @@ class CustomIconButton1 extends StatelessWidget {
   final double? iconLabelSpacing;
   final String? font;
   final double? fontSize;
+  final double? fontSizeAbsolute;
 
   const CustomIconButton1({
     super.key,
@@ -125,6 +126,7 @@ class CustomIconButton1 extends StatelessWidget {
     this.font,
     this.fontSize,
     this.onPressedSecond,
+    this.fontSizeAbsolute,
   });
 
   @override
@@ -147,7 +149,7 @@ class CustomIconButton1 extends StatelessWidget {
     // );
     final TextStyle _defaultTextStyle = GoogleFonts.getFont(
       font ?? 'Bebas Neue',
-      fontSize: fontSize?.sp ?? 18.sp,
+      fontSize: fontSizeAbsolute ?? fontSize?.sp ?? 18.sp,
       height: font == 'Bebas Neue' ? null : 0.9,
       fontWeight: FontWeight.w600,
       color: iconColor ?? Colors.white,
@@ -169,17 +171,23 @@ class CustomIconButton1 extends StatelessWidget {
       columnChildren.add(Text(label!.toUpperCase(), style: _finalTextStyle, textAlign: TextAlign.center));
     }
 
-    return InkWell(
-      onTap: onPressed,
-      child: Container(
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
         width: _containerWidth,
         height: _containerHeight,
-        padding: EdgeInsets.all(_containerPadding),
         decoration: BoxDecoration(color: _color, borderRadius: BorderRadius.circular(_borderRadius)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: columnChildren,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(_borderRadius),
+          child: Padding(
+            padding: EdgeInsets.all(_containerPadding),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: columnChildren,
+            ),
+          ),
         ),
       ),
     );

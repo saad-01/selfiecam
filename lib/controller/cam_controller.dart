@@ -10,6 +10,7 @@ import 'package:camera/camera.dart';
 import 'package:get/get.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:selfiecam1/controller/animation_controller.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
 import 'package:selfiecam1/data/models/lead_capture.dart';
@@ -29,6 +30,7 @@ import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
 import 'package:selfiecam1/infrastructure/utils/video_utils.dart';
 import 'package:selfiecam1/presentation/component/progress_bar.dart';
 import 'package:selfiecam1/presentation/home/preview_approve_screen.dart';
+import 'package:selfiecam1/presentation/home/send_it_to_me_2_screen.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:video_player/video_player.dart';
 
@@ -40,6 +42,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
   late CameraController cameraController;
   RxBool publishToPublic = true.obs;
   Rx<XFile>? capturedFile;
+  Rx<XFile>? capturedFileOriginal;
   RxInt counter = 6.obs;
   RxBool isCounting = true.obs;
   Timer? timer;
@@ -76,9 +79,12 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
     );
+
     cameraController = CameraController(frontCamera, ResolutionPreset.max, enableAudio: true);
 
-    await cameraController.initialize();
+    await cameraController.initialize(); // initialize FIRST
+    await cameraController.lockCaptureOrientation(DeviceOrientation.portraitUp); // THEN lock
+
     isReady.value = true;
   }
 
@@ -95,7 +101,38 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     super.onClose();
   }
 
+  Future<void> requestPhotoPermissionAfterLogin() async {
+    final status = await Permission.photos.request();
+
+    if (status.isPermanentlyDenied) {
+      await openAppSettings();
+    }
+  }
+
   Future<void> savePhoto() async {
+    if (capturedFileOriginal == null) return;
+    try {
+      final bytes = await File(capturedFileOriginal!.value.path).readAsBytes();
+      final result = await ImageGallerySaver.saveImage(
+        bytes,
+        name: "PhotoBooth_${DateTime.now().millisecondsSinceEpoch}",
+        quality: 100,
+      );
+      // final result = {};
+
+      if (result['isSuccess'] == true || result['success'] == true) {
+        // CustomSnackbar.showSuccess('Photo saved to gallery!');
+      } else {
+        // CustomSnackbar.showError('Failed to save photo.');
+      }
+
+      // capturedFile = null;
+    } catch (e) {
+      CustomSnackbar.showError('Something went wrong while saving.');
+    }
+  }
+
+  Future<void> saveAIPhoto() async {
     if (capturedFile == null) return;
     try {
       final bytes = await File(capturedFile!.value.path).readAsBytes();
@@ -144,7 +181,15 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
   Rx<XFile>? capturedFile4;
   Future<void> recordGif() async {
     try {
-      await cameraController.setFlashMode(FlashMode.always);
+      try {
+        await cameraController.setFlashMode(FlashMode.always);
+      } on CameraException catch (e) {
+        if (e.code == 'setFlashModeFailed') {
+          // Device does not have flash — silently ignore.
+        } else {
+          rethrow;
+        }
+      }
       final file = await cameraController.takePicture();
       final File originalFile = File(file.path);
 
@@ -153,7 +198,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       img.Image capturedImg = img.decodeImage(capturedBytes)!;
 
       // Mirror for front camera
-      capturedImg = img.flipHorizontal(capturedImg);
+      // capturedImg = img.flipHorizontal(capturedImg);
       final dir = await getTemporaryDirectory();
       final output = File('${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.png');
 
@@ -240,7 +285,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       img.Image capturedImg = img.decodeImage(capturedBytes)!;
 
       // Mirror for front camera
-      capturedImg = img.flipHorizontal(capturedImg);
+      // capturedImg = img.flipHorizontal(capturedImg);
       final dir = await getTemporaryDirectory();
       final output = File('${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.png');
 
@@ -262,9 +307,18 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     }
   }
 
+  img.Image? unflippedImage;
   Future<void> takePhoto() async {
     try {
-      await cameraController.setFlashMode(FlashMode.always);
+      try {
+        await cameraController.setFlashMode(FlashMode.always);
+      } on CameraException catch (e) {
+        if (e.code == 'setFlashModeFailed') {
+          // Device does not have flash — silently ignore.
+        } else {
+          rethrow;
+        }
+      }
       loader.show();
 
       final file = await cameraController.takePicture();
@@ -273,9 +327,11 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       // Read captured image
       final capturedBytes = await originalFile.readAsBytes();
       img.Image capturedImg = img.decodeImage(capturedBytes)!;
+      unflippedImage = img.decodeImage(capturedBytes)!;
 
       // Mirror for front camera
-      capturedImg = img.flipHorizontal(capturedImg);
+      // capturedImg = img.flipHorizontal(capturedImg);
+
 
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
 
@@ -292,6 +348,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
           final resizedOverlay = img.copyResize(overlayImg, width: capturedImg.width, height: capturedImg.height);
 
           img.compositeImage(capturedImg, resizedOverlay);
+          img.compositeImage(unflippedImage!, resizedOverlay);
         }
         // } else {
         //   Logger.log('Overlay skipped: HTTP ${response.statusCode}');
@@ -301,10 +358,13 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       // Save final image
       final dir = await getTemporaryDirectory();
       final output = File('${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}.png');
+      final output2 = File('${dir.path}/photo_${DateTime.now().millisecondsSinceEpoch}_original.png');
 
       await output.writeAsBytes(img.encodePng(capturedImg));
+      await output2.writeAsBytes(img.encodePng(unflippedImage!));
 
       capturedFile = XFile(output.path).obs;
+      capturedFileOriginal = XFile(output2.path).obs;
     } catch (e) {
       Logger.log('Error taking photo: $e');
     } finally {
@@ -392,7 +452,15 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
   String generatedImageId = "";
   String generatedImageUrl = "";
   Future<void> generateAiStyle() async {
-    await cameraController.setFlashMode(FlashMode.always);
+    try {
+      await cameraController.setFlashMode(FlashMode.always);
+    } on CameraException catch (e) {
+      if (e.code == 'setFlashModeFailed') {
+        // Device does not have flash — silently ignore.
+      } else {
+        rethrow;
+      }
+    }
     loader.show();
 
     final file = await cameraController.takePicture();
@@ -504,9 +572,50 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     isRecording.value = false;
   }
 
+  // Future<void> recordSlomo({int seconds = 5, double? speed}) async {
+  //   await cameraController.startVideoRecording();
+  //   init(seconds); // 10 seconds recording
+
+  //   await Future.delayed(Duration(seconds: seconds));
+  //   stop();
+  //   reset();
+  //   final XFile videoFile = await cameraController.stopVideoRecording();
+  //   loader.show();
+
+  //   var noAudioFile = await VideoUtils.removeAudio(videoFile.path);
+  //   var slowSpeedFile = await VideoUtils.changeVideoSpeed(noAudioFile, speed: speed ?? 1);
+  //   var reversedFile = await VideoUtils.reverseVideo(noAudioFile);
+  //   String? slomo = '';
+  //   // /// 🔹 Download overlay if exists
+  //   final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
+  //   try {
+  //     if (overlayUrl != null && overlayUrl.isNotEmpty) {
+  //       Logger.log("Applying overlay to 1st slomo video with overlayUrl: $overlayUrl");
+  //       final processedPath = await NativeVideoOverlay.apply(videoPath: reversedFile, overlayAsset: overlayUrl);
+  //       Logger.log("Applying overlay to 2nd slomo video with overlayUrl: $overlayUrl");
+  //       final processedPathForward = await NativeVideoOverlay.apply(videoPath: slowSpeedFile, overlayAsset: overlayUrl);
+  //       Logger.log("concatenating videos with overlayUrl");
+  //       slomo = await VideoUtils.concatenateVideosLocal(localVideoPath: processedPathForward, remoteVideoUrl: processedPath);
+  //       capturedFile = XFile(slomo!).obs;
+  //       await initVideoPreview(slomo);
+  //       loader.hide();
+  //     } else {
+  //       slomo = await VideoUtils.concatenateVideosLocal(localVideoPath: slowSpeedFile, remoteVideoUrl: reversedFile);
+  //       capturedFile = XFile(slomo!).obs;
+  //       await initVideoPreview(slomo);
+  //       loader.hide();
+  //     }
+  //   } catch (e) {
+  //     loader.hide();
+  //     throw Sentry.addBreadcrumb(Breadcrumb(message: "Error in recordSlomo: $e", level: SentryLevel.error));
+  //   }
+  // }
   Future<void> recordSlomo({int seconds = 5, double? speed}) async {
+    final sw = Stopwatch()..start();
+    void logTime(String label) => Logger.log('⏱ $label: ${(sw.elapsedMilliseconds / 1000).toStringAsFixed(2)}s');
+
     await cameraController.startVideoRecording();
-    init(seconds); // 10 seconds recording
+    init(seconds);
 
     await Future.delayed(Duration(seconds: seconds));
     stop();
@@ -514,30 +623,38 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     final XFile videoFile = await cameraController.stopVideoRecording();
     loader.show();
 
-    var noAudioFile = await VideoUtils.removeAudio(videoFile.path);
-    var slowSpeedFile = await VideoUtils.changeVideoSpeed(noAudioFile, speed: speed ?? 1);
-    var reversedFile = await VideoUtils.reverseVideo(noAudioFile);
-    String? slomo = '';
-    // /// 🔹 Download overlay if exists
-    final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
     try {
-      if (overlayUrl != null && overlayUrl.isNotEmpty) {
-        Logger.log("Applying overlay to 1st slomo video with overlayUrl: $overlayUrl");
-        final processedPath = await NativeVideoOverlay.apply(videoPath: reversedFile, overlayAsset: overlayUrl);
-        Logger.log("Applying overlay to 2nd slomo video with overlayUrl: $overlayUrl");
-        final processedPathForward = await NativeVideoOverlay.apply(videoPath: slowSpeedFile, overlayAsset: overlayUrl);
-        Logger.log("concatenating videos with overlayUrl");
-        slomo = await VideoUtils.concatenateVideosLocal(localVideoPath: processedPathForward, remoteVideoUrl: processedPath);
-        capturedFile = XFile(slomo!).obs;
-        await initVideoPreview(slomo);
+      // Step 1: single pass — slow + reversed at original resolution
+      sw.reset();
+      final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
+      final slomoPath = await VideoUtils.processSlomoSinglePass(inputPath: mirroredPath!, speed: speed ?? 1.0);
+      logTime('processSlomoSinglePass');
+
+      if (slomoPath == null) {
+        Logger.log('Error: processSlomoSinglePass returned null');
         loader.hide();
-      } else {
-        slomo = await VideoUtils.concatenateVideosLocal(localVideoPath: slowSpeedFile, remoteVideoUrl: reversedFile);
-        capturedFile = XFile(slomo!).obs;
-        await initVideoPreview(slomo);
-        loader.hide();
+        return;
       }
-    } catch (e) {
+
+      // Step 2: apply overlay once on full video at original resolution
+      String finalPath = slomoPath;
+      final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
+      if (overlayUrl != null && overlayUrl.isNotEmpty) {
+        sw.reset();
+        Logger.log("Applying overlay to slomo video");
+        finalPath = await NativeVideoOverlay.apply(videoPath: slomoPath, overlayAsset: overlayUrl);
+        logTime('overlay');
+      }
+
+      // Step 3: preview
+      sw.reset();
+      capturedFile = XFile(finalPath).obs;
+      await initVideoPreview(finalPath);
+      logTime('initVideoPreview');
+
+      loader.hide();
+    } catch (e, stackTrace) {
+      Logger.log('Error in recordSlomo: $e, stackTrace: $stackTrace');
       loader.hide();
       throw Sentry.addBreadcrumb(Breadcrumb(message: "Error in recordSlomo: $e", level: SentryLevel.error));
     }
@@ -563,7 +680,8 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       // /// 🔹 Download overlay if exists
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
       if (overlayUrl != null && overlayUrl.isNotEmpty) {
-        final processedPath = await NativeVideoOverlay.apply(videoPath: videoFile.path, overlayAsset: overlayUrl);
+        final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
+        final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
         capturedFile = XFile(processedPath).obs;
         await initVideoPreview(processedPath);
       } else {
@@ -584,7 +702,8 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     // /// 🔹 Download overlay if exists
     final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
     if (overlayUrl != null && overlayUrl.isNotEmpty) {
-      final processedPath = await NativeVideoOverlay.apply(videoPath: videoFile.path, overlayAsset: overlayUrl);
+      final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
+      final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
       capturedFile = XFile(processedPath).obs;
       await initVideoPreview(processedPath);
     } else {
@@ -613,14 +732,16 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
 
       final noAudioPath = await VideoUtils.removeAudio(videoFile.path);
       final boomerangPath = await VideoUtils.generateBoomerang(noAudioPath);
+      final mirroredPath = await VideoUtils().mirrorVideo(boomerangPath!);
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
       if (overlayUrl != null && overlayUrl.isNotEmpty) {
-        final processedPath = await NativeVideoOverlay.apply(videoPath: boomerangPath!, overlayAsset: overlayUrl);
+        final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
+        // final processedPathFlipped = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
         capturedFile = XFile(processedPath).obs;
         await initVideoPreview(processedPath);
       } else {
-        capturedFile = XFile(boomerangPath!).obs;
-        await initVideoPreview(boomerangPath);
+        capturedFile = XFile(mirroredPath!).obs;
+        await initVideoPreview(mirroredPath);
       }
     } catch (e) {
       Logger.log('Boomerang error: $e');
@@ -642,150 +763,132 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     isVideoInitialized.value = true;
   }
 
+  RxString captureType = ''.obs;
   Future<void> submitLead(String type) async {
     try {
-      LoaderService().show();
+      // Snapshot everything synchronously before any async work
+      final String originalFilePath = capturedFile!.value.path;
+      final String originalFileName = capturedFile!.value.name;
+      final String originalMimeType = capturedFile!.value.mimeType ?? 'image/jpeg';
+      final bool publishToPublic = CameraControllerX.to.publishToPublic.value;
+      final String eventName = PrefUtils().getString("eventName") ?? "unknown_event";
+      // await initVideoPreview(capturedFile!.value.path);
+      // Navigate immediately — user doesn't wait for processing
+      Get.to(() => SenItToMeScreen2(capturedFile: capturedFile!.value, type: type));
+
+      // Fire processing + enqueue in background — no await
+      unawaited(
+        _processAndEnqueue(
+          type: type,
+          originalFilePath: originalFilePath,
+          originalFileName: originalFileName,
+          originalMimeType: originalMimeType,
+          publishToPublic: publishToPublic,
+          eventName: eventName,
+          peopleList: [],
+        ),
+      );
+    } catch (e, stackTrace) {
+      CustomSnackbar.showError(e.toString());
+      Logger.log('Error submitting lead: $e $stackTrace');
+    }
+  }
+
+  Future<void> _processAndEnqueue({
+    required String type,
+    required String originalFilePath,
+    required String originalFileName,
+    required String originalMimeType,
+    required bool publishToPublic,
+    required String eventName,
+    required List<Map<String, dynamic>> peopleList,
+  }) async {
+    try {
+      // LoaderService().show();
+      final branding = DeviceController.to.branding.value;
+      String processedPath = originalFilePath;
+
       if (type == 'Photo') {
         await savePhoto();
-      } else if (type == 'Boomerang') {
-        if (DeviceController.to.branding.value?.backgroundAudio != null &&
-            DeviceController.to.branding.value!.enableAudioBoomerang) {
-          var video1 = await VideoUtils.attachBackgroundAudio(
-            videoPath: capturedFile!.value.path,
-            audioUrl: DeviceController.to.branding.value!.backgroundAudio!,
-          );
-          if (DeviceController.to.branding.value?.promoVideo != null &&
-              DeviceController.to.branding.value!.enablePromoBoomerang) {
-            var video = await VideoUtils.concatenateVideosLocal(
-              localVideoPath: video1!,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            capturedFile = XFile(video1!).obs;
-            await saveVideo();
-          }
-        } else {
-          if (DeviceController.to.branding.value?.promoVideo != null &&
-              DeviceController.to.branding.value!.enablePromoBoomerang) {
-            var video = await VideoUtils.concatenateVideosLocal(
-              localVideoPath: capturedFile!.value.path,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            Logger.log("hi");
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            await saveVideo();
-          }
-        }
-
-        // await camController.uploadToApi(widget.capturedFile!);
-      } else if (type == 'Shoutout') {
-        if (DeviceController.to.branding.value?.promoVideo != null && DeviceController.to.branding.value!.enablePromoShoutout) {
-          var video = await VideoUtils.concatenateVideosLocal(
-            localVideoPath: capturedFile!.value.path,
-            remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-          );
-          capturedFile = XFile(video!).obs;
-          await saveVideo();
-        } else {
-          await saveVideo();
-        }
-
-        // await camController.uploadToApi(widget.capturedFile!);
-      } else if (type == 'Gif') {
-        if (DeviceController.to.branding.value?.backgroundAudio != null && DeviceController.to.branding.value!.enableAudioGif) {
-          var video1 = await VideoUtils.attachBackgroundAudio(
-            videoPath: capturedFile!.value.path,
-            audioUrl: DeviceController.to.branding.value!.backgroundAudio!,
-          );
-
-          if (DeviceController.to.branding.value?.promoVideo != null &&
-              DeviceController.to.branding.value!.enablePromoAnimatedGif) {
-            var video = await VideoUtils.concatenateVideos(
-              localVideoPath: video1!,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            capturedFile = XFile(video1!).obs;
-            await saveVideo();
-          }
-        } else {
-          if (DeviceController.to.branding.value?.promoVideo != null &&
-              DeviceController.to.branding.value!.enablePromoAnimatedGif) {
-            var video = await VideoUtils.concatenateVideosLocal(
-              localVideoPath: capturedFile!.value.path,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            Logger.log("hi");
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            await saveVideo();
-          }
-        }
-
-        // await camController.uploadToApi(widget.capturedFile!);
-      } else if (type == 'Slomo') {
-        if (DeviceController.to.branding.value?.backgroundAudio != null &&
-            DeviceController.to.branding.value!.enableAudioSlowmo) {
-          var video1 = await VideoUtils.attachBackgroundAudio(
-            videoPath: capturedFile!.value.path,
-            audioUrl: DeviceController.to.branding.value!.backgroundAudio!,
-          );
-
-          if (DeviceController.to.branding.value?.promoVideo != null && DeviceController.to.branding.value!.enablePromoSlowmo) {
-            var video = await VideoUtils.concatenateVideosLocal(
-              localVideoPath: video1!,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            capturedFile = XFile(video1!).obs;
-            await saveVideo();
-          }
-        } else {
-          if (DeviceController.to.branding.value?.promoVideo != null && DeviceController.to.branding.value!.enablePromoSlowmo) {
-            var video = await VideoUtils.concatenateVideosLocal(
-              localVideoPath: capturedFile!.value.path,
-              remoteVideoUrl: DeviceController.to.branding.value!.promoVideo!,
-            );
-            Logger.log("hi");
-            capturedFile = XFile(video!).obs;
-            await saveVideo();
-          } else {
-            await saveVideo();
-          }
-        }
-
-        // await camController.uploadToApi(widget.capturedFile!);
+        processedPath = capturedFileOriginal!.value.path;
       } else if (type == 'Ai') {
-        await savePhoto();
+        await saveAIPhoto();
+        processedPath = capturedFile!.value.path;
+      } else if (type == 'Boomerang') {
+        processedPath = await _applyAudioAndPromo(
+          filePath: originalFilePath,
+          audio: branding?.backgroundAudio,
+          enableAudio: branding?.enableAudioBoomerang ?? false,
+          promoVideo: branding?.promoVideo,
+          enablePromo: branding?.enablePromoBoomerang ?? false,
+          useGifConcatenation: false,
+        );
+        capturedFile = XFile(processedPath).obs;
+        var flippedPath = await VideoUtils().flipVideoHorizontally(processedPath);
+        capturedFile = XFile(flippedPath!).obs;
+        await saveVideo();
+      } else if (type == 'Shoutout') {
+        processedPath = await _applyPromoOnly(
+          filePath: originalFilePath,
+          promoVideo: branding?.promoVideo,
+          enablePromo: branding?.enablePromoShoutout ?? false,
+          useGifConcatenation: false,
+        );
+        capturedFile = XFile(processedPath).obs;
+        await saveVideo();
+      } else if (type == 'Gif') {
+        processedPath = await _applyAudioAndPromo(
+          filePath: originalFilePath,
+          audio: branding?.backgroundAudio,
+          enableAudio: branding?.enableAudioGif ?? false,
+          promoVideo: branding?.promoVideo,
+          enablePromo: branding?.enablePromoAnimatedGif ?? false,
+          useGifConcatenation: true,
+        );
+        capturedFile = XFile(processedPath).obs;
+        await saveVideo();
+      } else if (type == 'Slomo') {
+        processedPath = await _applyAudioAndPromo(
+          filePath: originalFilePath,
+          audio: branding?.backgroundAudio,
+          enableAudio: branding?.enableAudioSlowmo ?? false,
+          promoVideo: branding?.promoVideo,
+          enablePromo: branding?.enablePromoSlowmo ?? false,
+          useGifConcatenation: false,
+        );
+        capturedFile = XFile(processedPath).obs;
+        await saveVideo();
       }
-      final stat = await File(capturedFile!.value.path).stat();
-      final bytes = stat.size;
-      var uploadQueue = Get.find<UploadQueueService>();
-      await uploadQueue.init(); // Ensure the service is initialized before enqueuing
+
+      final bytes = (await File(processedPath).stat()).size;
+      if (Get.isRegistered<UploadQueueService>()) {
+      } else {
+        await Get.putAsync(() async {
+          final service = UploadQueueService(
+            repository: UploadRepository(),
+            connectivity: InternetServiceAdapter(Get.find<InternetService>()),
+            credentials: MyCredentialsProvider(),
+          );
+          await service.init();
+          return service;
+        }, permanent: true);
+      }
+
+      final uploadQueue = Get.find<UploadQueueService>();
+      await uploadQueue.init();
 
       final mediaId = await uploadQueue.enqueue(
         UploadEnqueueRequest(
-          filePath: CameraControllerX.to.capturedFile!.value.path,
-          fileName: CameraControllerX.to.capturedFile!.value.name,
+          filePath: processedPath,
+          fileName: originalFileName,
           fileSize: bytes,
-          mimeType: CameraControllerX.to.capturedFile!.value.mimeType ?? 'image/jpeg',
-          eventName: PrefUtils().getString("eventName") ?? "unknown_event",
+          mimeType: originalMimeType,
+          eventName: eventName,
           compress: true,
-          listOnGallery: CameraControllerX.to.publishToPublic.value,
+          listOnGallery: publishToPublic,
+          leadCapture: peopleList,
         ),
       );
-
-      // `mediaId` is the UUID sent to the server as `media_id`.
-      // Listen to onItemUpdated for progress / completion events:
 
       uploadQueue.onItemUpdated.where((item) => item.id == mediaId).listen((item) {
         switch (item.status) {
@@ -800,16 +903,50 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
             break;
         }
       });
-
-      LoaderService().hide();
-      Get.back(); // Close the lead capture screen after submission
-      Get.back(); // Go back to the camera screen
-      Get.back(); // Go back to the experience selection screen
-      capturedFile = null;
     } catch (e, stackTrace) {
-      CustomSnackbar.showError(e.toString());
-      Logger.log('Error submitting lead: $e $stackTrace');
-    } finally {}
+      Logger.log('Background processing/enqueue error: $e $stackTrace');
+      // Soft error — user is already on the next screen
+      // CustomSnackbar.showError('Upload failed: ${e.toString()}');
+    } finally {
+      // LoaderService().hide();
+    }
+  }
+
+  Future<String> _applyAudioAndPromo({
+    required String filePath,
+    required String? audio,
+    required bool enableAudio,
+    required String? promoVideo,
+    required bool enablePromo,
+    required bool useGifConcatenation,
+  }) async {
+    String current = filePath;
+    if (audio != null && enableAudio) {
+      current = (await VideoUtils.attachBackgroundAudio(videoPath: current, audioUrl: audio))!;
+    }
+    return _applyPromoOnly(
+      filePath: current,
+      promoVideo: promoVideo,
+      enablePromo: enablePromo,
+      useGifConcatenation: useGifConcatenation,
+    );
+  }
+
+  Future<String> _applyPromoOnly({
+    required String filePath,
+    required String? promoVideo,
+    required bool enablePromo,
+    required bool useGifConcatenation,
+  }) async {
+    if (promoVideo != null && enablePromo) {
+      final result =
+          // useGifConcatenation
+          //     ? await VideoUtils.concatenateVideos(localVideoPath: filePath, remoteVideoUrl: promoVideo)
+          //     :
+          await VideoUtils.concatenateVideosLocal(localVideoPath: filePath, remoteVideoUrl: promoVideo);
+      return result!;
+    }
+    return filePath;
   }
 
   Future<void> saveVideo() async {

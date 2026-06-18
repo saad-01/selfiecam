@@ -52,6 +52,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      camController.publishToPublic.value = true;
       _popupTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
         if (counter.value == 1) {
           Get.back();
@@ -72,7 +73,7 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
     if (camController.videoController.value != null && camController.videoController.value!.value.isPlaying && !moveNext.value) {
       camController.videoController.value!.pause();
       camController.videoController.value!.seekTo(Duration.zero);
-      camController.videoController.value = null;
+      // camController.videoController.value = null;
     }
 
     // Optionally, reset to start
@@ -408,7 +409,14 @@ class _PreviewApproveScreenState extends State<PreviewApproveScreen> {
                             // Handle Privacy Policy click
                             // Get.toNamed('/privacy');
                             // OR launch URL
-                            Get.to(() => SignupWebview(url: "https://hub.selfiecam.ai/photo-release-agreement-app"));
+                            Get.to(
+                              () => SignupWebview(
+                                url:
+                                    DeviceController.to.settings.value?.photoReleaseAgreementUrl ??
+                                    'https://hub.selfiecam.ai/photo-release-agreement-app',
+                              ),
+                            );
+                            // Get.to(() => SignupWebview(url: "https://hub.selfiecam.ai/photo-release-agreement-app"));
                           },
                       ),
 

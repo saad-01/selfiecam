@@ -5,6 +5,9 @@ import 'package:camera/camera.dart';
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
+// import 'package:ffmpeg_kit_flutter_new_min/ffmpeg_kit.dart';
+// import 'package:ffmpeg_kit_flutter_new_min/ffprobe_kit.dart';
+// import 'package:ffmpeg_kit_flutter_new_min/return_code.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -856,6 +859,51 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     }
   }
 
+  static Future<String?> processSlomoSinglePass({required String inputPath, double speed = 1.0}) async {
+    final dir = await getTemporaryDirectory();
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final outputPath = '${dir.path}/slomo_$timestamp.mp4';
+
+    final ptsFactor = (1 / speed).toStringAsFixed(6);
+
+    // No scale/pad — keep original resolution so overlay fits correctly
+    final filterComplex = [
+      '[0:v]setpts=$ptsFactor*PTS[slow]', // slow + forward
+      '[0:v]reverse[rev]', // normal speed + reversed
+      '[slow][rev]concat=n=2:v=1:a=0[outv]',
+    ].join(';');
+
+    final command =
+        '-y -i "$inputPath" '
+        '-f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=44100" '
+        '-filter_complex "$filterComplex" '
+        '-map "[outv]" -map 1:a '
+        '-c:v h264_videotoolbox '
+        '-b:v 8000k '
+        '-pix_fmt yuv420p '
+        '-c:a aac -b:a 128k -ar 44100 -ac 2 '
+        '-shortest '
+        '-movflags +faststart '
+        '"$outputPath"';
+
+    debugPrint('[Slomo] Running single-pass FFmpeg');
+    final sw = Stopwatch()..start();
+
+    final session = await FFmpegKit.execute(command);
+    final returnCode = await session.getReturnCode();
+
+    debugPrint('[Slomo] ⏱ ${(sw.elapsedMilliseconds / 1000).toStringAsFixed(2)}s');
+
+    if (ReturnCode.isSuccess(returnCode)) {
+      debugPrint('[Slomo] ✅ $outputPath');
+      return outputPath;
+    } else {
+      final logs = await session.getAllLogsAsString();
+      debugPrint('[Slomo] ❌ FFmpeg failed:\n$logs');
+      return null;
+    }
+  }
+
   static Future<({dynamic height, dynamic width})?> _getVideoSize(String path) async {
     try {
       final session = await FFprobeKit.getMediaInformation(path);
@@ -1035,6 +1083,40 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
       return XFile(outputFile.path);
     } catch (e) {
       Logger.log("Overlay error: $e");
+      return null;
+    }
+  }
+
+  Future<String?> flipVideoHorizontally(String inputPath) async {
+    Logger.log('Flipping video horizontally: $inputPath');
+    final String outputPath = inputPath.replaceAll('.mp4', '_mirrored.mp4');
+
+    final session = await FFmpegKit.execute('-i $inputPath -vf hflip -c:v libx264 -preset fast -crf 23 -c:a copy $outputPath');
+
+    final returnCode = await session.getReturnCode();
+
+    if (ReturnCode.isSuccess(returnCode)) {
+      return outputPath;
+    } else {
+      final logs = await session.getAllLogsAsString();
+      print('FFmpeg failed: $logs');
+      return null;
+    }
+  }
+
+  Future<String?> mirrorVideo(String inputPath) async {
+    // Create output path alongside input
+    final outputPath = inputPath.replaceFirst('.mp4', '_mirrored.mp4');
+
+    final session = await FFmpegKit.execute('-i "$inputPath" -vf "hflip" -c:a copy "$outputPath"');
+
+    final returnCode = await session.getReturnCode();
+
+    if (ReturnCode.isSuccess(returnCode)) {
+      return outputPath; // success — return mirrored file path
+    } else {
+      final logs = await session.getLogsAsString();
+      print('FFmpeg error: $logs');
       return null;
     }
   }

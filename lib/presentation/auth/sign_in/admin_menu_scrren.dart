@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:selfiecam1/infrastructure/utils/custom_snackbar.dart';
@@ -20,6 +22,8 @@ class AdminMenuScreen extends StatefulWidget {
 class _AdminMenuScreenState extends State<AdminMenuScreen> {
   final controller = Get.put(AdminMenuController());
   bool _isImagePrecached = false;
+  Timer? _popupTimer;
+  var counter = 30.obs;
   var password = PrefUtils().getString("password") ?? "";
   @override
   void didChangeDependencies() {
@@ -34,6 +38,26 @@ class _AdminMenuScreenState extends State<AdminMenuScreen> {
   }
 
   @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _popupTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (counter.value == 1) {
+          Get.back();
+        } else {
+          counter.value--;
+        }
+      });
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _popupTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
@@ -42,6 +66,7 @@ class _AdminMenuScreenState extends State<AdminMenuScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
             Positioned.fill(
@@ -72,11 +97,11 @@ class _AdminMenuScreenState extends State<AdminMenuScreen> {
 
                     Column(
                       children: [
-                        Text('ADMIN MENU', style: textTheme.displayLarge),
+                        Text('ADMIN MENU', style: textTheme.displayLarge!.copyWith(fontSize: 90)),
 
                         SizedBox(height: 3.h),
 
-                        TextfieldComponent(hintText: 'PIN', isObscure: true, controller: controller.pinController),
+                        TextfieldComponent(hintText: 'PASSWORD', isObscure: true, controller: controller.pinController),
 
                         SizedBox(height: 3.h),
 
@@ -97,12 +122,23 @@ class _AdminMenuScreenState extends State<AdminMenuScreen> {
                       ],
                     ),
 
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 3.h),
-                      child: Image.asset(AppAssets.logo2, width: 55.w, height: 10.h, fit: BoxFit.contain),
-                    ),
+                    Image.asset(AppAssets.logo2, width: 355, height: 210, fit: BoxFit.contain),
                   ],
                 ),
+              ),
+            ),
+            Positioned(
+              bottom: 10,
+              left: 30,
+              child: Container(
+                height: 70,
+                width: 70,
+                padding: EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(color: Colors.white, width: 10),
+                ),
+                child: Obx(() => Center(child: Text('${counter.value}', style: textTheme.labelMedium))),
               ),
             ),
           ],

@@ -22,10 +22,10 @@ import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
 
 class SignInController extends GetxController {
-  final emailcontroller = TextEditingController(text: "m.saadashraf186@gmail.com");
-  final passwordcontroller = TextEditingController(text: "Saad@163");
-  // final emailcontroller = TextEditingController();
-  // final passwordcontroller = TextEditingController();
+  // final emailcontroller = TextEditingController(text: "m.saadashraf186@gmail.com");
+  // final passwordcontroller = TextEditingController(text: "Succe\$\$26");
+  final emailcontroller = TextEditingController();
+  final passwordcontroller = TextEditingController();
   final loader = Get.find<LoaderService>();
   final FlutterDeviceInfoPlus _deviceInfo = const FlutterDeviceInfoPlus();
   DeviceInformation? _deviceInformation;

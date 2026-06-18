@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sizer/sizer.dart';
 
 class TextfieldComponent extends StatelessWidget {
@@ -12,6 +13,7 @@ class TextfieldComponent extends StatelessWidget {
   final double? verticalPadding;
   final double? horizontalPadding;
   final TextAlign? textAlign;
+  final List<TextInputFormatter>? inputFormatters;
   final bool? isRequired;
   final void Function(String)? onChanged;
 
@@ -28,7 +30,8 @@ class TextfieldComponent extends StatelessWidget {
     this.horizontalPadding,
     this.textAlign,
     this.isRequired,
-    this.onChanged
+    this.onChanged,
+    this.inputFormatters,
   });
 
   @override
@@ -76,6 +79,7 @@ class TextfieldComponent extends StatelessWidget {
         keyboardType: keyboardType,
         enabled: _enabled,
         onChanged: onChanged,
+        inputFormatters: inputFormatters,
         textAlign: _textAlign,
         decoration: inputDecoration,
         style: TextStyle(color: Colors.black, fontSize: 22.sp, fontFamily: 'Akshar'),

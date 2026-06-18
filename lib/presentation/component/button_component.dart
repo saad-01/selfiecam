@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:sizer/sizer.dart';
 
 class ButtonComponent extends StatelessWidget {
@@ -47,18 +48,77 @@ class ButtonComponent extends StatelessWidget {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: _backgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_borderRadius),
-        ),
-        padding: EdgeInsets.symmetric(
-          vertical: _verticalPadding,
-          horizontal: _horizontalPadding,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_borderRadius)),
+        padding: EdgeInsets.symmetric(vertical: _verticalPadding, horizontal: _horizontalPadding),
         elevation: 0,
         visualDensity: VisualDensity.compact,
         minimumSize: Size.fromHeight(_verticalPadding * 2 + 2.h),
       ),
       child: Text(_text.toUpperCase(), style: finalTextStyle),
+    );
+  }
+}
+
+class ButtonComponentIcon extends StatelessWidget {
+  final String? text;
+  final VoidCallback? onPressed;
+
+  final Color? backgroundColor;
+  final Color? fontColor;
+  final double? borderRadius;
+  final double? verticalPadding;
+  final double? horizontalPadding;
+  final TextStyle? textStyle;
+  final String? iconPath;
+
+  const ButtonComponentIcon({
+    super.key,
+    this.text,
+    this.onPressed,
+    this.backgroundColor,
+    this.fontColor,
+    this.borderRadius,
+    this.verticalPadding,
+    this.horizontalPadding,
+    this.textStyle,
+    this.iconPath,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final String _text = text ?? 'BUTTON';
+    final Color _backgroundColor = backgroundColor ?? const Color(0xffE6FF4B);
+    final double _borderRadius = borderRadius ?? 3.w;
+    final double _verticalPadding = verticalPadding ?? 2.h;
+    final double _horizontalPadding = horizontalPadding ?? 4.w;
+
+    final TextStyle _defaultTextStyle = TextStyle(
+      fontFamily: 'Akshar',
+      fontSize: 22.sp,
+      color: fontColor ?? Colors.black,
+      fontWeight: FontWeight.w700,
+    );
+
+    final TextStyle finalTextStyle = _defaultTextStyle.merge(textStyle);
+
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: _backgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_borderRadius)),
+        padding: EdgeInsets.symmetric(vertical: _verticalPadding, horizontal: _horizontalPadding),
+        elevation: 0,
+        visualDensity: VisualDensity.compact,
+        minimumSize: Size.fromHeight(_verticalPadding * 2 + 2.h),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 2.w,
+        children: [
+          Text(_text.toUpperCase(), style: finalTextStyle),
+          SvgPicture.asset(iconPath ?? 'assets/icons/default_icon.svg'),
+        ],
+      ),
     );
   }
 }

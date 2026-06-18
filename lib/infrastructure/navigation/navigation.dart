@@ -81,11 +81,11 @@ class Nav {
       page: () => const SenItToMeScreen(type: '',),
       // binding: InitialBindings(),
     ),
-    GetPage(
-      name: Routes.SENDITTOME2,
-      page: () => const SenItToMeScreen2(),
-      // binding: InitialBindings(),
-    ),
+    // GetPage(
+    //   name: Routes.SENDITTOME2,
+    //   page: () => const SenItToMeScreen2(),
+    //   // binding: InitialBindings(),
+    // ),
     GetPage(
       name: Routes.EMAIL,
       page: () => const Email(),

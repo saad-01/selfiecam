@@ -5,6 +5,11 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:selfiecam1/controller/device_controller.dart';
 import 'package:selfiecam1/controller/settings_controller.dart';
+import 'package:selfiecam1/data/services/credentials.dart';
+import 'package:selfiecam1/data/services/internet_service.dart';
+import 'package:selfiecam1/data/services/internet_service_adapter.dart';
+import 'package:selfiecam1/data/services/upload_queue_service.dart';
+import 'package:selfiecam1/data/services/upload_repository.dart';
 import 'package:selfiecam1/infrastructure/navigation/routes.dart';
 import 'package:selfiecam1/infrastructure/utils/pref_utils.dart';
 import 'package:selfiecam1/presentation/auth/sign_in/event_join_screen.dart';
@@ -207,8 +212,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 text: 'Pending Uploads',
                                 color: const Color(0xFFFFC107),
                                 borderRadius: 0.0,
-                                onPressed: () {
+                                onPressed: () async {
                                   // Get.toNamed(Routes.WELCOME1);
+                                  if (Get.isRegistered<UploadQueueService>()) {
+                                  } else {
+                                    await Get.putAsync(() async {
+                                      final service = UploadQueueService(
+                                        repository: UploadRepository(),
+                                        connectivity: InternetServiceAdapter(Get.find<InternetService>()),
+                                        credentials: MyCredentialsProvider(),
+                                      );
+                                      await service.init();
+                                      return service;
+                                    }, permanent: true);
+                                  }
                                   Get.to(() => PendingUploads());
                                 },
                               ),
@@ -310,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: item.icon,
                 iconSize: 5.h,
                 font: branding?.fontFamily,
-                fontSize: 13.sp,
+                fontSizeAbsolute: 25,
                 label: item.label,
                 iconColor: branding?.buttonTextColor != null
                     ? Color(int.parse('0xff${branding!.buttonTextColor.substring(1)}'))

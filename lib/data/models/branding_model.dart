@@ -144,7 +144,7 @@ class SettingsModel {
     return SettingsModel(
       termsUrl: json['termsUrl'] ?? '',
       privacyPolicyUrl: json['privacyPolicyUrl'] ?? '',
-      photoReleaseAgreementUrl: json['photoReleaseAgreementUrl'] ?? '',
+      photoReleaseAgreementUrl: json['photoAgreementURL'] ?? '',
       explicitDisclaimerEnabled: json['explicitDisclaimerEnabled'] ?? false,
     );
   }
@@ -154,7 +154,7 @@ class SettingsModel {
       "explicitDisclaimerEnabled": explicitDisclaimerEnabled,
       "privacyPolicyUrl": privacyPolicyUrl,
       "termsUrl": termsUrl,
-      "photoReleaseAgreementUrl": photoReleaseAgreementUrl,
+      "photoAgreementURL": photoReleaseAgreementUrl,
     };
   }
 }

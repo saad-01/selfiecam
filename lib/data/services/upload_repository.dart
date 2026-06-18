@@ -19,6 +19,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:logger/web.dart';
+import 'package:selfiecam1/controller/cam_controller.dart';
 
 import '../models/lead_capture.dart';
 import '../models/upload_queue_item.dart';
@@ -103,12 +105,16 @@ class UploadRepository {
     void Function(double progress)? onProgress,
   }) async {
     final formData = FormData.fromMap({
-      'media': await MultipartFile.fromFile(item.filePath, filename: item.fileName,),
+      'media': await MultipartFile.fromFile(item.filePath, filename: item.fileName),
       'eventName': item.eventName,
       'compress': item.compress ? 'true' : 'false',
       'media_id': item.id, // client-side UUID echoed back as media_id
       'leadCapture': jsonEncode(item.leadCapture),
+      'captureType': CameraControllerX.to.captureType.value,
+      'listOnGallery': item.listOnGallery,
     });
+    print("FormData: ${formData.fields}, Files: ${formData.files}");
+    print("LeadCapture JSON: ${jsonEncode(item.leadCapture)}");
 
     final response = await _dio.post(
       '${creds.imageBase}/upload',
@@ -223,6 +229,8 @@ class UploadRepository {
       'eventName': eventName,
       'compress': 'false', // Server reassembles; compression is handled there
       'leadCapture': leadCapture,
+      'captureType': CameraControllerX.to.captureType.value,
+      'listOnGallery': CameraControllerX.to.publishToPublic.value, // Chunked uploads are not listed in gallery
     };
 
     final response = await _dio.post(

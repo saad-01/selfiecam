@@ -95,7 +95,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                       scale: controller.scaleAnimation.value,
                       child: Text(
                         controller.counter.value.toString(),
-                        style: TextStyle(fontSize: 630, fontWeight: FontWeight.bold, color: Colors.black),
+                        style: TextStyle(fontSize: 530, fontWeight: FontWeight.bold, color: Colors.black),
                       ),
                     );
                   },
@@ -124,7 +124,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                               ? "GET READY FOR A PHOTO SHOOT! ".toUpperCase()
                               : "GET READY TO STIKE A POSE!".toUpperCase(),
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.black, fontSize: 80, fontWeight: FontWeight.w300),
+                          style: TextStyle(color: Colors.black, fontSize: 60, fontWeight: FontWeight.w300),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +132,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                             Text(
                               "IT’S A ".toUpperCase(),
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Colors.black, fontSize: 70, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -152,7 +152,7 @@ class _CountdownScreenState extends State<CountdownScreen> {
                                   ? "Gif".toUpperCase()
                                   : "PHOTO".toUpperCase(),
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.black, fontSize: 90, fontWeight: FontWeight.w900),
+                              style: TextStyle(color: Colors.black, fontSize: 70, fontWeight: FontWeight.w900),
                             ),
                           ],
                         ),

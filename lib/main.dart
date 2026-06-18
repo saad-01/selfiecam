@@ -2,7 +2,10 @@ import 'dart:io';
 
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_new/log_redirection_strategy.dart';
+// import 'package:ffmpeg_kit_flutter_new_min/ffmpeg_kit_config.dart';
+// import 'package:ffmpeg_kit_flutter_new_min/log_redirection_strategy.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -32,6 +35,10 @@ import 'infrastructure/navigation/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown, // optional
+  ]);
   await dotenv.load(fileName: "assets/config/.env");
   await PrefUtils().init();
   await ApiCalls.initialize();

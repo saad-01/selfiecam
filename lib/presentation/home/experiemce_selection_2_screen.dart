@@ -33,6 +33,7 @@ class _ExperienceSelectionScreen2State extends State<ExperienceSelectionScreen2>
         deviceController.isIdle.value = false;
         deviceController.startIdleTimer();
       }
+      camController.requestPhotoPermissionAfterLogin();
     });
 
     // unawaited(deviceController.loadAllInfo());
@@ -104,7 +105,7 @@ class _ExperienceSelectionScreen2State extends State<ExperienceSelectionScreen2>
                   Text(
                     'SELECT YOUR EXPERIENCE',
                     style: textTheme.displayLarge!.copyWith(
-                      fontSize: 25.sp,
+                      fontSize: 55,
                       color: deviceController.branding.value?.fontColor != null
                           ? Color(int.parse('0xff${deviceController.branding.value!.fontColor.substring(1)}'))
                           : Colors.white,

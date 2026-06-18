@@ -58,7 +58,7 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     // ─── Composition ──────────────────────────────────────────────────────
     let composition = AVMutableComposition()
     guard
-      let compositionTrack = composition.addMutableTrack(
+      let compositionVideoTrack = composition.addMutableTrack(
         withMediaType: .video,
         preferredTrackID: kCMPersistentTrackID_Invalid
       )
@@ -68,7 +68,7 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     }
 
     do {
-      try compositionTrack.insertTimeRange(
+      try compositionVideoTrack.insertTimeRange(
         CMTimeRange(start: .zero, duration: asset.duration),
         of: track,
         at: .zero
@@ -76,6 +76,24 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     } catch {
       result(FlutterError(code: "INSERT_FAILED", message: error.localizedDescription, details: nil))
       return
+    }
+
+    // ─── Audio track (preserved from original video) ───────────────────────
+    if let audioTrack = asset.tracks(withMediaType: .audio).first,
+       let compositionAudioTrack = composition.addMutableTrack(
+         withMediaType: .audio,
+         preferredTrackID: kCMPersistentTrackID_Invalid
+       ) {
+      do {
+        try compositionAudioTrack.insertTimeRange(
+          CMTimeRange(start: .zero, duration: asset.duration),
+          of: audioTrack,
+          at: .zero
+        )
+      } catch {
+        // Non-fatal — video will still export without audio
+        print("Warning: Could not insert audio track: \(error)")
+      }
     }
 
     // ─── Video composition with overlay ───────────────────────────────────
@@ -90,10 +108,10 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     let instruction = AVMutableVideoCompositionInstruction()
     instruction.timeRange = CMTimeRange(start: .zero, duration: asset.duration)
 
-    let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionTrack)
+    let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionVideoTrack)
 
     // ✅ Fix rotation — handles iPhone/iPad rotation metadata
-    var transform = track.preferredTransform
+    let transform = track.preferredTransform
     layerInstruction.setTransform(transform, at: .zero)
     instruction.layerInstructions = [layerInstruction]
     videoComposition.instructions = [instruction]

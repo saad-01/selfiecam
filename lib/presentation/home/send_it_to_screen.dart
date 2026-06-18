@@ -36,6 +36,7 @@ class _SenItToMeScreenState extends State<SenItToMeScreen> {
           Get.back();
           Get.back();
           Get.back();
+          camController.submitLead(widget.type);
         } else {
           counter.value--;
         }
@@ -50,7 +51,7 @@ class _SenItToMeScreenState extends State<SenItToMeScreen> {
     if (camController.videoController.value != null && camController.videoController.value!.value.isPlaying && !moveNext.value) {
       camController.videoController.value!.pause();
       camController.videoController.value!.seekTo(Duration.zero);
-      camController.videoController.value = null;
+      // camController.videoController.value = null;
     }
     super.dispose();
   }
@@ -90,6 +91,7 @@ class _SenItToMeScreenState extends State<SenItToMeScreen> {
                 Get.back();
                 Get.back();
                 Get.back();
+                camController.submitLead(widget.type);
               },
             ),
           ),
@@ -120,6 +122,7 @@ class _SenItToMeScreenState extends State<SenItToMeScreen> {
                         onPressed: () {
                           Get.back();
                           Get.back();
+                          camController.submitLead(widget.type);
                         },
                       ),
                     ),

@@ -131,7 +131,7 @@ class _SignInScreenState extends State<SignInScreen> {
                       /// Bottom Logo
                       Padding(
                         padding: EdgeInsets.only(bottom: 3.h),
-                        child: Image.asset(AppAssets.logo2, width: 55.w, height: 10.h, fit: BoxFit.contain),
+                        child: Image.asset(AppAssets.logo2, width: 250, height: 250, fit: BoxFit.contain),
                       ),
                     ],
                   ),

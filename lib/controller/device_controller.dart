@@ -14,6 +14,7 @@ import 'package:selfiecam1/data/models/lead_model.dart';
 import 'package:selfiecam1/data/services/branding_service.dart';
 import 'package:selfiecam1/data/services/experience_service.dart';
 import 'package:selfiecam1/data/services/internet_service.dart';
+import 'package:selfiecam1/data/services/lead_capture_service.dart';
 import 'package:selfiecam1/data/services/settings_service.dart';
 import 'package:selfiecam1/data/services/socket_service.dart';
 import 'package:selfiecam1/infrastructure/constants/api_endpoints.dart';
@@ -35,6 +36,7 @@ class DeviceController extends GetxController {
   final BrandingLocalRepository _brandingRepo = BrandingLocalRepository();
   final SettingsLocalRepository _settingsRepo = SettingsLocalRepository();
   final ExperiencesLocalRepository repo = ExperiencesLocalRepository();
+  final LeadCaptureLocalRepository leadCaptureLocalRepository = LeadCaptureLocalRepository();
   DeviceInformation? deviceInformation;
   final branding = Rxn<Branding>();
   final experiences = Rxn<Experiences>();
@@ -187,7 +189,9 @@ class DeviceController extends GetxController {
 
       experienceData = response.data['data']['lastEventId']['experiences'];
       if (response.data['data']['leadCaptureConfig'] != null) {
-        leadCaptureConfig.value = LeadCaptureConfig.fromJson(response.data['data']['leadCaptureConfig']);
+        leadCaptureConfig.value = await leadCaptureLocalRepository.processAndStore(
+          LeadCaptureConfig.fromJson(response.data['data']['leadCaptureConfig']),
+        );
       }
       Logger.log("Branding loaded: ${response.data['data']['lastEventId']['branding']['homeNoActivityVideo'] ?? ''}");
     } else {
@@ -299,7 +303,10 @@ class DeviceController extends GetxController {
           key: 'photo',
           label: 'Photo',
           icon: AppAssets.selfie,
-          onTap: () => Get.to(() => CountdownScreen(type: 'Photo')),
+          onTap: () {
+            CameraControllerX.to.captureType.value = 'image';
+            Get.to(() => CountdownScreen(type: 'Photo'));
+          },
         ),
 
       if (settings.isEnabled('boomerang', exp.boomerang.enabled) && exp.boomerang.enabled)
@@ -307,7 +314,10 @@ class DeviceController extends GetxController {
           key: 'boomerang',
           label: 'Boomerang',
           icon: AppAssets.boomerang,
-          onTap: () => Get.to(() => CountdownScreen(type: 'Boomerang')),
+          onTap: () {
+            CameraControllerX.to.captureType.value = 'boomerang';
+            Get.to(() => CountdownScreen(type: 'Boomerang'));
+          },
         ),
 
       if (settings.isEnabled('gif', exp.gif.enabled) && exp.gif.enabled)
@@ -320,6 +330,7 @@ class DeviceController extends GetxController {
             CameraControllerX.to.capturedFile2 = null;
             CameraControllerX.to.capturedFile3 = null;
             CameraControllerX.to.capturedFile4 = null;
+            CameraControllerX.to.captureType.value = 'gif';
             Get.to(() => CountdownScreen(type: 'Gif'));
           },
         ),
@@ -329,7 +340,10 @@ class DeviceController extends GetxController {
           key: 'shoutout',
           label: 'Shoutout',
           icon: AppAssets.shoutout,
-          onTap: () => Get.to(() => CountdownScreen(type: 'Shoutout')),
+          onTap: () {
+            CameraControllerX.to.captureType.value = 'shoutout';
+            Get.to(() => CountdownScreen(type: 'Shoutout'));
+          },
         ),
 
       if (settings.isEnabled('slowmo', exp.slowMotion.enabled) && exp.slowMotion.enabled)
@@ -337,7 +351,10 @@ class DeviceController extends GetxController {
           key: 'slowmo',
           label: 'Slowmo',
           icon: AppAssets.slowmo,
-          onTap: () => Get.to(() => CountdownScreen(type: 'Slomo')),
+          onTap: () {
+            CameraControllerX.to.captureType.value = 'slomo';
+            Get.to(() => CountdownScreen(type: 'Slomo'));
+          },
         ),
 
       if (settings.isEnabled('ai', exp.aiStyles.enabled) && exp.aiStyles.enabled && Get.find<InternetService>().isConnected.value)
@@ -347,6 +364,7 @@ class DeviceController extends GetxController {
           icon: AppAssets.aiPhoto,
           onTap: () {
             if (exp.aiStyles.styles.isNotEmpty) {
+              CameraControllerX.to.captureType.value = 'ai_photo';
               var enabledStyles = exp.aiStyles.styles.where((style) => style['enabled'] == true).toList();
 
               Get.to(() => AiStylePreview(list: enabledStyles));
@@ -372,8 +390,10 @@ class DeviceController extends GetxController {
     }
     final boxThird = await Hive.openBox("leadCaptureBox");
     final dataThird = boxThird.get("leadCapture");
+    Logger.log("Loaded lead capture config from local storage: $dataThird");
     if (dataThird != null) {
       leadCaptureConfig.value = LeadCaptureConfig.fromJson(dataThird);
+      Logger.log("Loaded lead capture config from local storage: ${leadCaptureConfig.value}");
     }
   }
 
@@ -423,6 +443,7 @@ class DeviceController extends GetxController {
     videoControllerForOverlay.value = controller;
     isVideoInitializedOverlay.value = true;
   }
+
   bool firstIdle = false;
   Future<void> initVideoPreviewForActivity(String path) async {
     // videoControllerForActivity.value?.dispose();
@@ -465,7 +486,6 @@ class DeviceController extends GetxController {
   }
 
   void clearTimer() {
-    
     _idleTimer?.cancel();
     _idleTimer = null;
   }

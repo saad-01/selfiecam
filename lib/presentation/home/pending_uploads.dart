@@ -7,6 +7,7 @@ import 'package:selfiecam1/data/models/upload_queue_item.dart';
 import 'package:selfiecam1/data/models/upload_status.dart';
 import 'package:selfiecam1/data/services/upload_queue_service.dart';
 import 'package:selfiecam1/infrastructure/constants/app_assets.dart';
+import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:selfiecam1/presentation/component/back_button.dart';
 import 'package:sizer/sizer.dart';
 
@@ -58,7 +59,7 @@ class _PendingUploadsState extends State<PendingUploads> {
                       ),
                     ),
 
-                    Text('PENDING TRANSFERS', style: textTheme.displayLarge),
+                    Text('PENDING TRANSFERS', style: textTheme.displayLarge!.copyWith(fontSize: 65)),
                     SizedBox(height: 2.h),
                     // Table section
                     Column(
@@ -103,15 +104,10 @@ class _PendingUploadsState extends State<PendingUploads> {
             ),
           ),
 
-          Positioned(
-            bottom: 3.h,
-            right: 0,
-            left: 0,
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 3.h),
-              child: Image.asset(AppAssets.logo2, width: 55.w, height: 10.h, fit: BoxFit.contain),
-            ),
-          ),
+          // Align(
+          //   alignment: Alignment.bottomCenter,
+          //   child: Image.asset(AppAssets.logo2, width: 355, height: 210, fit: BoxFit.contain),
+          // ),
         ],
       ),
     );
@@ -146,7 +142,7 @@ class _UploadTable extends StatelessWidget {
                 _HeaderCell('Media ID', flex: 2, sortable: true),
                 // _HeaderCell('Preview', flex: 2, sortable: true),
                 _HeaderCell('Contact', flex: 4, sortable: true),
-                _HeaderCell('Date', flex: 2, sortable: true),
+                _HeaderCell('Date', flex: 3, sortable: true),
                 _HeaderCell('Time', flex: 2),
                 _HeaderCell('Status', flex: 2),
                 _HeaderCell('Action', flex: 2, align: TextAlign.center),
@@ -218,12 +214,15 @@ class _UploadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = DateFormat('dd/MM/yyyy').format(item.createdAt);
+    // Logger.log('Building row for item ${item.leadCapture} with status ${item.status}');
+    final date = DateFormat('MM/dd/yyyy').format(item.createdAt);
     final time = DateFormat('hh:mm a').format(item.createdAt);
-    final contact = item.leadCapture?.email?.isNotEmpty == true
-        ? item.leadCapture!.email!
-        : item.leadCapture?.name?.isNotEmpty == true
-        ? item.leadCapture!.name!
+    final firstPerson = item.leadCapture?.isNotEmpty == true ? item.leadCapture!.first : null;
+
+    final contact = firstPerson?['email']?.toString().isNotEmpty == true
+        ? firstPerson!['email'].toString()
+        : firstPerson?['name']?.toString().isNotEmpty == true
+        ? firstPerson!['name'].toString()
         : '-';
 
     return Container(
@@ -255,7 +254,7 @@ class _UploadRow extends StatelessWidget {
 
           // Date
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Text(date, style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 13)),
           ),
 
