@@ -228,10 +228,11 @@ class UploadRepository {
       'uploadId': uploadId,
       'eventName': eventName,
       'compress': 'false', // Server reassembles; compression is handled there
-      'leadCapture': leadCapture,
       'captureType': CameraControllerX.to.captureType.value,
       'listOnGallery': CameraControllerX.to.publishToPublic.value, // Chunked uploads are not listed in gallery
     };
+    // Omit entirely when no lead capture — sending null causes server 400.
+    if (leadCapture != null) body['leadCapture'] = leadCapture.toJson();
 
     final response = await _dio.post(
       '${creds.imageBase}/chunk/complete',

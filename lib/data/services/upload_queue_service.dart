@@ -385,7 +385,7 @@ class UploadQueueService {
       uploadId: item.chunkUploadId!,
       eventName: item.eventName,
       creds: creds,
-      leadCapture: item.leadCapture,
+      leadCapture: item.leadCapture is LeadCapture ? item.leadCapture as LeadCapture : null,
     );
 
     item.serverMediaId = result.id;
