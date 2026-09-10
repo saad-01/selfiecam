@@ -119,12 +119,12 @@ class _SignInScreenState extends State<SignInScreen> {
 
                           SizedBox(height: 3.h),
 
-                          InkWell(
-                            onTap: () {
-                              Get.toNamed(Routes.SIGNUP);
-                            },
-                            child: Text('NEW? JOIN FOR FREE', style: textTheme.labelLarge),
-                          ),
+                          // InkWell(
+                          //   onTap: () {
+                          //     Get.toNamed(Routes.SIGNUP);
+                          //   },
+                          //   child: Text('NEW? JOIN FOR FREE', style: textTheme.labelLarge),
+                          // ),
                         ],
                       ),
 

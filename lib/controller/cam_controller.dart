@@ -875,7 +875,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       }
 
       final uploadQueue = Get.find<UploadQueueService>();
-      await uploadQueue.init();
+      // await uploadQueue.init();
 
       final mediaId = await uploadQueue.enqueue(
         UploadEnqueueRequest(

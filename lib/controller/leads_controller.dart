@@ -217,7 +217,7 @@ class LeadsController extends GetxController {
       clearForm();
 
       // Navigate immediately — user doesn't wait for video processing
-      Get.to(() => SenItToMeScreen2(capturedFile: CameraControllerX.to.capturedFile!.value, type: type));
+      Get.off(() => SenItToMeScreen2(capturedFile: CameraControllerX.to.capturedFile!.value, type: type));
 
       // Fire processing + upload in background — no await
       unawaited(
@@ -270,7 +270,7 @@ class LeadsController extends GetxController {
           useGifConcatenation: false,
         );
         CameraControllerX.to.capturedFile = XFile(processedPath).obs;
-        CameraControllerX.to.capturedFile = XFile(processedPath).obs;
+        // CameraControllerX.to.capturedFile = XFile(processedPath).obs;
         var flippedPath = await VideoUtils().flipVideoHorizontally(processedPath);
         CameraControllerX.to.capturedFile = XFile(flippedPath!).obs;
         await CameraControllerX.to.saveVideo();
@@ -321,7 +321,7 @@ class LeadsController extends GetxController {
         }, permanent: true);
       }
       final uploadQueue = Get.find<UploadQueueService>();
-      await uploadQueue.init();
+      // await uploadQueue.init();
 
       final mediaId = await uploadQueue.enqueue(
         UploadEnqueueRequest(

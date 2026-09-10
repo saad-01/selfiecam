@@ -275,7 +275,7 @@ class UploadQueueService {
 
       await _updateItem(item, status: UploadStatus.uploading);
 
-      if (item.requiresChunkedUpload) {
+      if (false) {
         Logger.log('Starting chunked upload for ${item.fileName} (${item.fileSize} bytes)');
         await _chunkUpload(item, creds);
       } else {
@@ -288,7 +288,9 @@ class UploadQueueService {
         status: UploadStatus.completed,
         uploadProgress: 1.0,
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      print('Upload failed: $error');
+      print('Stack trace: $stackTrace');
       await _handleFailure(item, error);
     } finally {
       _activeIds.remove(item.id);
@@ -336,7 +338,7 @@ class UploadQueueService {
 
     if (item.chunkUploadId == null) {
       final initResult = await _repository.chunkInit(item, creds);
-
+      print('Chunked upload init: ${initResult.toString()}');
       item.chunkUploadId = initResult.uploadId;
       item.chunkSize = initResult.chunkSize;
       item.totalChunks = initResult.totalChunks;
@@ -378,9 +380,9 @@ class UploadQueueService {
       await item.save();
       _statusController.add(item);
     }
-
+    print('All chunks uploaded for ${item.chunkUploadId}');
     // ── Step 3: complete ─────────────────────────────────────────────────────
-
+// jsonEncode(item.leadCapture),
     final result = await _repository.chunkComplete(
       uploadId: item.chunkUploadId!,
       eventName: item.eventName,
@@ -400,7 +402,6 @@ class UploadQueueService {
     item.retryCount++;
     item.errorMessage = error.toString();
     item.updatedAt = DateTime.now();
-
     if (item.retryCount >= maxRetries) {
       // Exhausted all retries – surface to the UI as FAILED.
       await _updateItem(item, status: UploadStatus.failed);
