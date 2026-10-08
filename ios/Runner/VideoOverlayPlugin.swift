@@ -24,10 +24,11 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
       return
     }
 
-    applyOverlay(videoPath: videoPath, overlayPath: overlayPath, result: result)
+    let mirror = args["mirror"] == "true"
+    applyOverlay(videoPath: videoPath, overlayPath: overlayPath, mirror: mirror, result: result)
   }
 
-  private func applyOverlay(videoPath: String, overlayPath: String, result: @escaping FlutterResult) {
+  private func applyOverlay(videoPath: String, overlayPath: String, mirror: Bool, result: @escaping FlutterResult) {
     let videoURL = URL(fileURLWithPath: videoPath)
     let asset = AVURLAsset(url: videoURL)
 
@@ -111,14 +112,17 @@ public class VideoOverlayPlugin: NSObject, FlutterPlugin {
     let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionVideoTrack)
 
     // ✅ Fix rotation — handles iPhone/iPad rotation metadata
-    let transform = track.preferredTransform
+    var transform = track.preferredTransform
+    if mirror {
+      transform = transform.concatenating(CGAffineTransform(a: -1, b: 0, c: 0, d: 1, tx: size.width, ty: 0))
+    }
     layerInstruction.setTransform(transform, at: .zero)
     instruction.layerInstructions = [layerInstruction]
     videoComposition.instructions = [instruction]
 
     // ─── Export ───────────────────────────────────────────────────────────
     let outputDir = NSTemporaryDirectory()
-    let outputPath = "\(outputDir)overlay_\(Int(Date().timeIntervalSince1970)).mp4"
+    let outputPath = "\(outputDir)overlay_\(UUID().uuidString).mp4"
     let outputURL = URL(fileURLWithPath: outputPath)
 
     guard let exporter = AVAssetExportSession(

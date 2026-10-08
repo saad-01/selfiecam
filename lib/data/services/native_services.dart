@@ -12,6 +12,7 @@ class NativeVideoOverlay {
   static Future<String> apply({
     required String videoPath,
     required String overlayAsset,
+    bool mirror = false,
   }) async {
     // Write asset to temp file so native side can read it
     final dir = await getTemporaryDirectory();
@@ -22,6 +23,7 @@ class NativeVideoOverlay {
     final result = await _channel.invokeMethod<String>('applyOverlay', {
       'videoPath': videoPath,
       'overlayPath': overlayPath,
+      'mirror': mirror ? 'true' : 'false',
     });
 
     if (result == null) throw Exception('Native overlay returned null');

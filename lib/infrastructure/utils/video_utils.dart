@@ -19,6 +19,10 @@ import 'package:selfiecam1/infrastructure/utils/logger.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 class VideoUtils {
+  /// Shared hardware (VideoToolbox) encode args — avoids the software libx264
+  /// re-encode that was pegging the CPU on older iPads (e.g. iPad Pro 12.9" 4th gen).
+  static const String _hwVideo = '-c:v h264_videotoolbox -b:v 8000k -allow_sw 1 -pix_fmt yuv420p';
+
   /// Remove audio
   static Future<String> removeAudio(String inputPath) async {
     final dir = await getTemporaryDirectory();
@@ -370,12 +374,14 @@ class VideoUtils {
   //   return null;
   // }
 
-  static Future<String?> generateBoomerang(String inputPath) async {
+  static Future<String?> generateBoomerang(String inputPath, {bool mirror = true}) async {
     final dir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
     final reversedPath = '${dir.path}/reversed_$timestamp.mp4';
     final outputPath = '${dir.path}/boomerang_$timestamp.mp4';
+
+    final mirrorPrefix = mirror ? 'hflip,' : '';
 
     // Step 1: Create the reversed clip at 2x speed
     // -vf reverse          → reverses frames
@@ -384,12 +390,9 @@ class VideoUtils {
     final reverseCmd =
         '''
   -i "$inputPath"
-  -vf "reverse,setpts=0.667*PTS"
+  -vf "${mirrorPrefix}reverse,setpts=0.667*PTS"
   -af "areverse,atempo=1.2"
-  -c:v libx264
--preset fast
--crf 18
--pix_fmt yuv420p
+  $_hwVideo
 -movflags +faststart
   -y "$reversedPath"
 '''
@@ -409,12 +412,9 @@ class VideoUtils {
     final speedCmd =
         '''
   -i "$inputPath"
--vf "setpts=0.667*PTS"
+-vf "${mirrorPrefix}setpts=0.667*PTS"
 -af "atempo=1.2"
--c:v libx264
--preset fast
--crf 18
--pix_fmt yuv420p
+$_hwVideo
 -movflags +faststart
 -y "$speedupPath"
 '''
@@ -568,11 +568,8 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
 "
 -map "[outv]"
 -map "[outa]"
--c:v libx264
+$_hwVideo
 -c:a aac
--pix_fmt yuv420p
--preset ultrafast
--crf 23
 -movflags +faststart
 -y "$outputPath"
 '''
@@ -837,9 +834,7 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
         '${inputArgs.toString().trim()} '
         '-filter_complex "$filterComplex" '
         '-map "[outv]" -map "[outa]" '
-        '-c:v libx264 -profile:v baseline -level:v 4.1 '
-        '-preset ultrafast -crf 23 '
-        '-pix_fmt yuv420p '
+        '$_hwVideo '
         '-c:a aac -b:a 128k -ar 44100 -ac 2 '
         '-movflags +faststart '
         '-y "$outputPath"';
@@ -859,17 +854,19 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     }
   }
 
-  static Future<String?> processSlomoSinglePass({required String inputPath, double speed = 1.0}) async {
+  static Future<String?> processSlomoSinglePass({required String inputPath, double speed = 1.0, bool mirror = true}) async {
     final dir = await getTemporaryDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final outputPath = '${dir.path}/slomo_$timestamp.mp4';
 
     final ptsFactor = (1 / speed).toStringAsFixed(6);
+    final mirrorPrefix = mirror ? 'hflip,' : '';
 
     // No scale/pad — keep original resolution so overlay fits correctly
     final filterComplex = [
-      '[0:v]setpts=$ptsFactor*PTS[slow]', // slow + forward
-      '[0:v]reverse[rev]', // normal speed + reversed
+      '[0:v]${mirrorPrefix}split=2[fwd][back]', // mirror once, then branch
+      '[fwd]setpts=$ptsFactor*PTS[slow]', // slow + forward
+      '[back]reverse[rev]', // normal speed + reversed
       '[slow][rev]concat=n=2:v=1:a=0[outv]',
     ].join(';');
 
@@ -878,9 +875,7 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
         '-f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=44100" '
         '-filter_complex "$filterComplex" '
         '-map "[outv]" -map 1:a '
-        '-c:v h264_videotoolbox '
-        '-b:v 8000k '
-        '-pix_fmt yuv420p '
+        '$_hwVideo '
         '-c:a aac -b:a 128k -ar 44100 -ac 2 '
         '-shortest '
         '-movflags +faststart '
@@ -1091,7 +1086,7 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     Logger.log('Flipping video horizontally: $inputPath');
     final String outputPath = inputPath.replaceAll('.mp4', '_mirrored.mp4');
 
-    final session = await FFmpegKit.execute('-i $inputPath -vf hflip -c:v libx264 -preset fast -crf 23 -c:a copy $outputPath');
+    final session = await FFmpegKit.execute('-y -i "$inputPath" -vf hflip $_hwVideo -c:a copy "$outputPath"');
 
     final returnCode = await session.getReturnCode();
 
@@ -1108,7 +1103,7 @@ pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v1];
     // Create output path alongside input
     final outputPath = inputPath.replaceFirst('.mp4', '_mirrored.mp4');
 
-    final session = await FFmpegKit.execute('-i "$inputPath" -vf "hflip" -c:a copy "$outputPath"');
+    final session = await FFmpegKit.execute('-y -i "$inputPath" -vf "hflip" $_hwVideo -c:a copy "$outputPath"');
 
     final returnCode = await session.getReturnCode();
 

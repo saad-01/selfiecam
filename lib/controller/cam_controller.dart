@@ -624,10 +624,9 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     loader.show();
 
     try {
-      // Step 1: single pass — slow + reversed at original resolution
+      // Step 1: single pass — mirror + slow + reversed at original resolution
       sw.reset();
-      final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
-      final slomoPath = await VideoUtils.processSlomoSinglePass(inputPath: mirroredPath!, speed: speed ?? 1.0);
+      final slomoPath = await VideoUtils.processSlomoSinglePass(inputPath: videoFile.path!, speed: speed ?? 1.0, mirror: true);
       logTime('processSlomoSinglePass');
 
       if (slomoPath == null) {
@@ -680,8 +679,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       // /// 🔹 Download overlay if exists
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
       if (overlayUrl != null && overlayUrl.isNotEmpty) {
-        final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
-        final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
+        final processedPath = await NativeVideoOverlay.apply(videoPath: videoFile.path, overlayAsset: overlayUrl, mirror: true);
         capturedFile = XFile(processedPath).obs;
         await initVideoPreview(processedPath);
       } else {
@@ -702,8 +700,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
     // /// 🔹 Download overlay if exists
     final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
     if (overlayUrl != null && overlayUrl.isNotEmpty) {
-      final mirroredPath = await VideoUtils().mirrorVideo(videoFile.path!);
-      final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
+      final processedPath = await NativeVideoOverlay.apply(videoPath: videoFile.path, overlayAsset: overlayUrl, mirror: true);
       capturedFile = XFile(processedPath).obs;
       await initVideoPreview(processedPath);
     } else {
@@ -731,8 +728,7 @@ class CameraControllerX extends GetxController with GetTickerProviderStateMixin 
       loader.show();
 
       final noAudioPath = await VideoUtils.removeAudio(videoFile.path);
-      final boomerangPath = await VideoUtils.generateBoomerang(noAudioPath);
-      final mirroredPath = await VideoUtils().mirrorVideo(boomerangPath!);
+      final mirroredPath = await VideoUtils.generateBoomerang(noAudioPath);
       final overlayUrl = DeviceController.to.branding.value?.photoVideoOverlay;
       if (overlayUrl != null && overlayUrl.isNotEmpty) {
         final processedPath = await NativeVideoOverlay.apply(videoPath: mirroredPath!, overlayAsset: overlayUrl);
